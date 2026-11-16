@@ -1,0 +1,187 @@
+/**
+ * Vesta Codex 风格语义设计 Tokens (Design Tokens)
+ * 遵循 Apple HIG (2025/2026) 与 Codex 桌面端视觉体系
+ */
+
+:root {
+  /* 基础模式设置 */
+  color-scheme: light dark;
+
+  /* ===============================
+   * 浅色模式语义颜色 (Light Mode)
+   * =============================== */
+  --surface-window: #ffffff;
+  --surface-sidebar: #f5f5f7;
+  --surface-card: #ffffff;
+  --surface-grouped: #f2f2f7;
+  --surface-hover: rgba(0, 0, 0, 0.04);
+  --surface-active: rgba(0, 0, 0, 0.08);
+
+  --text-primary: #1d1d1f;
+  --text-secondary: #6e6e73;
+  --text-tertiary: #86868b;
+  --text-placeholder: #a1a1a6;
+
+  --border-separator: rgba(0, 0, 0, 0.09);
+  --border-focus: #0071e3;
+
+  --accent-primary: #0071e3;
+  --accent-hover: #0077ed;
+  --accent-subtle: rgba(0, 113, 227, 0.08);
+
+  --status-success: #1e7e34;
+  --status-warning: #a05a00;
+  --status-error: #d70015;
+
+  /* ===============================
+   * 排版字体栈 (Typography)
+   * =============================== */
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+    "PingFang SC", "Hiragino Sans GB", "Helvetica Neue", sans-serif;
+  --font-mono: "SF Mono", Monaco, Menlo, Consolas, "PingFang SC", monospace;
+
+  /* 字阶规范 */
+  --text-size-title: 16px;
+  --text-line-title: 22px;
+  --text-size-headline: 14px;
+  --text-line-headline: 20px;
+  --text-size-body: 15px;
+  --text-line-body: 24px;
+  --text-size-ui: 13px;
+  --text-line-ui: 18px;
+  --text-size-caption: 12px;
+  --text-line-caption: 16px;
+  --text-size-code: 13px;
+  --text-line-code: 20px;
+
+  /* ===============================
+   * 空间与间距标尺 (Spacing)
+   * =============================== */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* ===============================
+   * 圆角标尺 (Radius)
+   * =============================== */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* ===============================
+   * 阴影与景深 (Shadows)
+   * =============================== */
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-popup: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.08);
+  --shadow-composer: 0 4px 20px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
+  --shadow-drawer: -12px 0 36px rgba(0, 0, 0, 0.08);
+
+  /* ===============================
+   * 转场过渡 (Transitions)
+   * =============================== */
+  --transition-fast: 120ms ease;
+  --transition-normal: 180ms ease;
+  --transition-layout: 220ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* ===============================
+   * 兼容旧版 CSS Tokens 别名
+   * =============================== */
+  --bg-app: var(--surface-window);
+  --bg-sidebar: var(--surface-sidebar);
+  --bg-surface: var(--surface-card);
+  --bg-surface-raised: var(--surface-grouped);
+  --bg-surface-hover: var(--surface-hover);
+  --border-subtle: var(--border-separator);
+  --border-strong: var(--border-separator);
+  --accent: var(--accent-primary);
+  --accent-soft: var(--accent-subtle);
+  --success: var(--status-success);
+  --warning: var(--status-warning);
+  --danger: var(--status-error);
+  --radius-control: var(--radius-sm);
+  --radius-surface: var(--radius-lg);
+  --radius-composer: var(--radius-xl);
+
+  --bg: var(--bg-app);
+  --bg-panel: var(--bg-surface);
+  --bg-hover: var(--bg-surface-hover);
+  --bg-elevated: var(--bg-surface-raised);
+  --border: var(--border-subtle);
+  --text: var(--text-primary);
+  --text-dim: var(--text-secondary);
+  --muted: var(--text-tertiary);
+  --ok: var(--success);
+  --warn: var(--warning);
+}
+
+/* ===============================
+ * 深色模式语义颜色 (Dark Mode)
+ * =============================== */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --surface-window: #1e1e1e;
+    --surface-sidebar: #18181a;
+    --surface-card: #252528;
+    --surface-grouped: #2c2c2e;
+    --surface-hover: rgba(255, 255, 255, 0.06);
+    --surface-active: rgba(255, 255, 255, 0.12);
+
+    --text-primary: #f5f5f7;
+    --text-secondary: #98989d;
+    --text-tertiary: #7c7c82;
+    --text-placeholder: #636366;
+
+    --border-separator: rgba(255, 255, 255, 0.12);
+    --border-focus: #0a84ff;
+
+    --accent-primary: #0a84ff;
+    --accent-hover: #409cff;
+    --accent-subtle: rgba(10, 132, 255, 0.15);
+
+    --status-success: #32d74b;
+    --status-warning: #ffd60a;
+    --status-error: #ff453a;
+
+    --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+    --shadow-popup: 0 8px 28px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-composer: 0 4px 20px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.2);
+    --shadow-drawer: -12px 0 36px rgba(0, 0, 0, 0.35);
+  }
+}
+
+/* ===============================
+ * 增强对比度模式 (Increase Contrast)
+ * =============================== */
+@media (prefers-contrast: more) {
+  :root {
+    --border-separator: #b0b0b5;
+    --text-secondary: #3a3a3c;
+    --text-tertiary: #505054;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --border-separator: #545458;
+      --text-secondary: #d1d1d6;
+      --text-tertiary: #aaaaae;
+    }
+  }
+}
+
+/* ===============================
+ * 减弱动态效果 (Reduce Motion)
+ * =============================== */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --transition-fast: 0ms;
+    --transition-normal: 0ms;
+    --transition-layout: 0ms;
+  }
+}

@@ -1,44 +1,4 @@
-:root {
-  color-scheme: light;
-  --bg-app: rgba(244, 247, 251, 0.44);
-  --bg-sidebar: rgba(255, 255, 255, 0.58);
-  --bg-surface: rgba(255, 255, 255, 0.62);
-  --bg-surface-raised: rgba(255, 255, 255, 0.82);
-  --bg-surface-hover: rgba(255, 255, 255, 0.9);
-  --border-subtle: rgba(78, 92, 112, 0.13);
-  --border-strong: rgba(63, 78, 100, 0.23);
-  --text-primary: #182233;
-  --text-secondary: #536174;
-  --text-tertiary: #8490a1;
-  --accent: #4f73d9;
-  --accent-hover: #3f64ca;
-  --accent-soft: rgba(79, 115, 217, 0.11);
-  --success: #2d9564;
-  --warning: #b87926;
-  --danger: #c95555;
-  --shadow-drawer: -18px 0 54px rgba(55, 72, 98, 0.14);
-  --shadow-composer: 0 16px 45px rgba(63, 79, 104, 0.14);
-  --radius-control: 7px;
-  --radius-surface: 11px;
-  --radius-composer: 16px;
-  --transition-fast: 140ms ease;
-  --transition-layout: 180ms ease;
-  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI',
-    'PingFang SC', 'Microsoft YaHei', sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
-
-  /* 旧页面的兼容 token；后续逐页重构时再移除。 */
-  --bg: var(--bg-app);
-  --bg-panel: var(--bg-surface);
-  --bg-hover: var(--bg-surface-hover);
-  --bg-elevated: var(--bg-surface-raised);
-  --border: var(--border-subtle);
-  --text: var(--text-primary);
-  --text-dim: var(--text-secondary);
-  --muted: var(--text-tertiary);
-  --ok: var(--success);
-  --warn: var(--warning);
-}
+@import './styles/tokens.css';
 
 * {
   box-sizing: border-box;
@@ -54,24 +14,11 @@ body,
 }
 
 body {
-  background: #edf2f7;
+  background: var(--surface-window);
   color: var(--text-primary);
   font-family: var(--font-sans);
-  font-size: 13px;
+  font-size: var(--text-size-ui, 13px);
   -webkit-font-smoothing: antialiased;
-}
-
-body::before {
-  content: '';
-  position: fixed;
-  z-index: 0;
-  inset: -18%;
-  background:
-    radial-gradient(circle at 18% 18%, rgba(191, 218, 255, 0.72), transparent 34%),
-    radial-gradient(circle at 82% 16%, rgba(255, 225, 198, 0.58), transparent 31%),
-    radial-gradient(circle at 60% 88%, rgba(205, 232, 224, 0.62), transparent 35%),
-    #eef3f8;
-  filter: blur(24px);
 }
 
 #root {
