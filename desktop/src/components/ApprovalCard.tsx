@@ -1,4 +1,8 @@
-/** 统一审批卡片视觉：Chat 与 ApprovalsPage 均可复用。 */
+/**
+ * 统一审批卡片 (ApprovalCard)
+ * 遵循 Codex 风格与 Apple HIG 规范：操作类型、参数与风险等级清晰分离，
+ * 提供 Prominent / Destructive 规范化按钮（按钮高度 ≥ 28pt）与键盘快捷提示。
+ */
 
 import type { ReactElement } from 'react'
 import type { ApprovalRequest } from '../api/types'
@@ -65,48 +69,84 @@ export default function ApprovalCard({
     }
   })()
 
+  const isHighRisk = ['run_shell_command', 'run_command'].includes(approval.tool_name)
+
+  const handleKeyDown = (e: React.KeyboardEvent): void => {
+    if (busy) return
+    if (e.key === 'Escape') {
+      e.preventDefault()
+      onDeny(approval.id)
+    } else if (e.key === 'Enter' && (e.metaKey || !isHighRisk)) {
+      e.preventDefault()
+      onApprove(approval.id)
+    }
+  }
+
   return (
-    <div className="approval-card" data-testid="approval-card">
+    <div
+      className={`approval-card ${isHighRisk ? 'approval-card--high-risk' : ''}`}
+      data-testid="approval-card"
+      aria-label="权限审批确认"
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
+    >
       <div className="approval-card__heading">
-        <span className="approval-card__icon"><Icon name="approvals" size={17} /></span>
-        <div>
-          <div className="approval-card__eyebrow">需要你的确认</div>
+        <span className="approval-card__icon" aria-hidden="true">
+          <Icon name="approvals" size={17} />
+        </span>
+        <div className="approval-card__identity">
+          <div className="approval-card__eyebrow">
+            <span>需要你的确认</span>
+            <span className="approval-card__risk-badge">
+              {isHighRisk ? '终端权限' : desktop ? '电脑控制' : '外部请求'}
+            </span>
+          </div>
           <div className="approval-card__title">允许“{title}”吗？</div>
           <div className="approval-card__desc">{description}</div>
         </div>
       </div>
+
       {command ? (
         <div className="approval-card__command">
-          <span>即将执行</span>
-          <code>{command}</code>
+          <span className="approval-card__command-label">即将执行</span>
+          <code className="approval-card__command-code mono">{command}</code>
         </div>
       ) : null}
+
       {approval.reason ? (
         <div className="approval-card__reason">{approval.reason}</div>
       ) : null}
+
       {argsText ? (
         <details className="approval-card__details">
           <summary>查看技术详情</summary>
-          <div className="approval-card__tech">工具：{approval.tool_name}</div>
-          <pre>{argsText}</pre>
+          <div className="approval-card__tech mono">工具：{approval.tool_name}</div>
+          <pre className="approval-card__json mono">{argsText}</pre>
         </details>
       ) : null}
+
       <div className="approval-card__actions">
         <Button
           variant="danger"
           size="sm"
           disabled={busy}
           onClick={() => onDeny(approval.id)}
+          aria-label="拒绝此项操作"
+          title="拒绝执行此操作 (Esc)"
         >
           拒绝
         </Button>
         <Button
-          variant="primary"
+          variant={isHighRisk ? 'default' : 'primary'}
           size="sm"
           disabled={busy}
           onClick={() => onApprove(approval.id)}
+          aria-label="允许执行此操作"
+          title={isHighRisk ? '高风险操作，请确认后点击或按 ⌘⏎ 允许' : '允许执行此操作 (⏎)'}
+          className={isHighRisk ? 'approval-card__btn--caution' : ''}
         >
-          允许执行
+          {busy ? <span className="spinner spinner--light" /> : <Icon name="check" size={13} />}
+          <span>允许执行</span>
         </Button>
       </div>
     </div>

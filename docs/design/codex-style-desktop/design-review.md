@@ -81,7 +81,7 @@
 
 ## 3. P4 专项审查：步骤任务面板、工具执行折叠卡片与成果交付卡片
 
-依据 coordinator 协同指令，基于 `generative-ai.md`、`progress-indicators.md`、`disclosure-controls.md` 对 P4 核心组件进行专项审查：
+基于 `generative-ai.md`、`progress-indicators.md`、`disclosure-controls.md` 对 P4 核心组件进行专项审查：
 
 ### 3.1 步骤任务面板 (CurrentTaskPanel & PlanCard) 审查
 - **HIG 依据**：
@@ -122,7 +122,43 @@
 
 ---
 
-## 4. D01–D14 设计规则逐项合规对照表
+## 4. P5 专项审查：审批系统与后台无焦点浮窗闭环
+
+依据 Apple HIG `panels.md`、`alerts.md`、`modality.md`、`buttons.md` 及 D13/D14 准则对 P5 审批闭环进行专项审查：
+
+### 4.1 审批卡片与弹窗 (ApprovalCard & ComputerApprovalPopup) 审查
+- **HIG 依据**：
+  - `alerts.md › Best practices`：“Use alerts sparingly... When people take an uncommon destructive action that they can’t undo, it’s important to display an alert in case they initiated the action accidentally.”
+  - `buttons.md › Role` 与 `buttons.md › Best practices`：“In general, use a button that has a prominent visual style for the most likely action in a view... Use style — not size — to visually distinguish the preferred choice among multiple options... Don’t assign the primary role to a button that performs a destructive action... Always use Cancel to title a button that cancels the alert’s action.”
+- **设计审查要点**：
+  1. **动作、参数与风险等级三权分离**：
+     - 卡片顶栏必须以醒目标签展示操作类型（如 `bash.execute`、`fs.write_file`、`computer.click`）；
+     - 清晰分离出参数展示区（命令文本、目标路径、坐标位置等），采用 SF Mono 12pt 等宽文字包裹在 `--surface-grouped` 背景内；
+     - 显式标识风险等级：高风险（红色警示，如文件删除、提权命令）、中度风险（黄色警告，如覆盖写文件、外部请求）、普通操作（蓝色提示）。
+  2. **按钮与交互层级规范**：
+     - 普通审批：批准按钮采用 `.prominent` 强调蓝；拒绝按钮使用标准浅灰边框样式，文案统一为“拒绝执行”；
+     - 破坏性审批（Destructive Action）：批准按钮严禁赋予默认 Primary 强调态，必须赋予 Destructive 红色外边框或红色文字，防止用户未读直接按 Return 误触发；
+     - 尺寸与无障碍：按钮高度严格符合 macOS 规范（≥ 28×28pt），支持快捷键 `Return`（常规批准）与 `Esc`（安全取消）。
+
+### 4.2 独立无焦点审批浮窗 (ApprovalFloatingWindow) 审查
+- **HIG 依据与有意例外**：
+  - `panels.md › Best practices`：“Use a panel to give people quick access to important controls or information related to the content they’re working with... Keep HUDs small.”
+  - 执行计划第 3.5 节有意例外明确规定：Vesta 的 Computer 操作需要用户在其他应用中前台操作时进行安全确认，因此该浮窗必须具备跨应用可见性，且绝不能剥夺用户当前正在使用的前台应用程序（如 Xcode、Chrome、Terminal）的键盘焦点。
+- **设计审查要点**：
+  1. **无焦点特性与窗口行为**：
+     - Electron 窗口底层配置：`focusable: false`, `alwaysOnTop: true`, `showInactive()`, `acceptFirstMouse: true`；
+     - 用户在 IDE 中打字时，浮窗滑出或淡入，光标与键盘输入完全不被打断；
+     - 鼠标单击浮窗内的“批准”或“拒绝”按钮时，瞬间完成 IPC 通信闭环，并立即平滑退场，绝不强行将 Vesta 主窗口唤起抢夺焦点。
+  2. **视觉层级与紧凑 HUD 质感**：
+     - 尺寸设定：控制在 `340pt × 160pt` 至 `380pt × 200pt` 之间，严禁喧宾夺主；
+     - 材质规范：背景采用半透明磨砂质感（`backdrop-filter: blur(20px)`），浅色模式使用微透亮白（`rgba(255, 255, 255, 0.85)`），深色模式使用深炭黑（`rgba(30, 30, 30, 0.88)`），边框采用 1pt 系统分隔线，保证在任何复杂桌面壁纸或代码窗口之上均具备清晰边缘与可读性；
+     - 杜绝装饰性霓虹发光与大面积警示色填充，仅在状态图标与风险等级标签处使用点睛高反差色彩。
+  3. **复杂审批的跳出通道 (Exit Hatch)**：
+     - 遵循 `modality.md` 避免深层嵌套规则：若审批内容包含超长脚本、复杂参数或需要手动修改目标，浮窗中必须提供“前往主窗口查看详情”引导；点击后才显式激活 Vesta 主窗口并将对应审批条目高亮聚焦。
+
+---
+
+## 5. D01–D14 设计规则逐项合规对照表
 
 严格对照执行计划（`2026-11-16-codex-style-ui-ux-plan.md`）第 3.4 节所列的 14 项设计硬性规则：
 
@@ -145,17 +181,17 @@
 
 ---
 
-## 5. 优化建议与落地注意项 (Improvements)
+## 6. 优化建议与落地注意项 (Improvements)
 
-虽然规范设计在整体架构与合规性上表现优异，但在 P4 阶段组件实现落地时，仍需在工程实现上重点关注以下两点：
+在 P5 审批闭环代码实现中，重点关注以下两点：
 
-1. **[Medium] 工具调用的性能与虚拟化兜底**：
-   - 当单个 Run 触发多达数十次工具调用时，收折状态的卡片 DOM 节点需要保持轻量，未展开的入参和输出不应提前解析和高亮渲染，采用按需懒加载（Lazy Load / Render-on-expand）机制。
-2. **[Medium] 步骤面板状态更新无闪烁**：
-   - 步骤状态从 Pending 转为 In Progress 或 Completed 时，仅更新对应行状态指示器，避免重载整个 Plan 容器导致焦点重置。
+1. **[High] 跨 Renderer 与 Main 进程的状态防双重点击与过期同步**：
+   - 当主窗口与审批浮窗同时挂载同一条 Pending Approval 时，用户在任意一侧点击“批准”，Main 进程必须原子化锁定该记录，并通过 IPC 即时将另一侧按钮置为 Disabled/已处理状态，坚决杜绝因网络延迟导致的双重执行。
+2. **[Medium] 屏幕边缘避让与多显示器适配**：
+   - 浮窗在计算展示坐标时，调用 Electron `screen.getDisplayNearestPoint(screen.getCursorScreenPoint())`，严格根据该显示器的 `workArea` 摆放，避免跨越双屏缝隙或被系统 macOS 菜单栏与 Dock 遮挡。
 
 ---
 
-## 6. 结论
+## 7. 结论
 
-更新后的设计审查报告全面涵盖了 P0-P4 阶段的交互组件与流程范式，重点规范了步骤任务面板、工具执行渐进折叠及成果交付卡片，为 builder 推进 P4 代码重构提供了直接可对照的 HIG 规范与验收标准。
+更新后的设计审查报告已全面覆盖 P0-P5 阶段全部核心组件与系统级交互闭环。审批系统与独立无焦点浮窗在严格遵从 Apple HIG（`panels.md`、`alerts.md`、`buttons.md`）的同时，合理落实业务特定例外，为 builder 推进 P5 阶段工程落地提供了严密的指导与验收基准。

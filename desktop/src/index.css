@@ -5201,173 +5201,497 @@ kbd { padding: 1px 5px; border: 1px solid var(--border); border-radius: 4px; bac
   white-space: pre-wrap;
 }
 
-/* Chat 内的命令审批：先展示意图和命令，再提供克制的技术详情。 */
+/* ========================================================================
+   审批卡片 (ApprovalCard) - 遵循 Codex 风格与 Apple HIG 规范
+   ======================================================================== */
 .approval-card {
-  max-width: 680px;
-  padding: 17px 18px;
-  border: 1px solid #deded9;
-  border-left: 1px solid #deded9;
-  border-radius: 12px;
-  background: #fff;
-  box-shadow: 0 8px 24px rgba(38, 40, 36, 0.07);
+  width: min(100%, 760px);
+  max-width: 760px;
+  margin: 12px 0 24px;
+  padding: 16px 18px;
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-surface, 12px);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  outline: none;
+}
+
+.approval-card:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-subtle);
+}
+
+.approval-card--high-risk {
+  border-left-color: var(--danger);
+  background: var(--surface-card);
+}
+
+.approval-card--high-risk:focus-visible {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px rgba(229, 77, 77, 0.16);
+}
+
+.approval-card__heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
 }
 
 .approval-card__icon {
-  border: 0;
-  background: #eef2ef;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 32px;
+  border-radius: 8px;
+  background: var(--surface-grouped);
   color: var(--accent);
+  border: 1px solid var(--border-separator);
+}
+
+.approval-card--high-risk .approval-card__icon {
+  color: var(--danger);
+  background: rgba(229, 77, 77, 0.08);
+  border-color: rgba(229, 77, 77, 0.2);
+}
+
+.approval-card__identity {
+  flex: 1;
+  min-width: 0;
 }
 
 .approval-card__eyebrow {
-  color: var(--warning);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.approval-card__risk-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 7px;
+  border-radius: 4px;
   font-size: 10px;
-  letter-spacing: .08em;
+  font-weight: 600;
+  background: var(--accent-subtle);
+  color: var(--accent);
+}
+
+.approval-card--high-risk .approval-card__risk-badge {
+  background: rgba(229, 77, 77, 0.12);
+  color: var(--danger);
 }
 
 .approval-card__title {
   margin-top: 4px;
-  font-size: 14px;
-  font-weight: 680;
+  font-size: 14.5px;
+  font-weight: 650;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+.approval-card__desc {
+  margin-top: 4px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  line-height: 1.5;
 }
 
 .approval-card__command {
   display: grid;
   gap: 6px;
   margin-top: 14px;
-  padding: 11px 12px;
-  border: 1px solid #e2e2dd;
-  border-radius: 9px;
-  background: #f7f7f4;
+  padding: 10px 12px;
+  border: 1px solid var(--border-separator);
+  border-radius: 8px;
+  background: var(--surface-grouped);
 }
 
-.approval-card__command > span {
+.approval-card__command-label {
   color: var(--text-tertiary);
-  font-size: 9.5px;
+  font-size: 10.5px;
+  font-weight: 600;
 }
 
-.approval-card__command code {
+.approval-card__command-code {
   overflow-x: auto;
-  color: #2d302c;
-  font: 11px/1.55 var(--font-mono);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: var(--text-size-code, 12px);
+  line-height: 1.55;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
 .approval-card__reason {
   margin-top: 10px;
+  font-size: 12px;
   color: var(--text-secondary);
-  font-size: 11px;
+  line-height: 1.5;
+}
+
+.approval-card__details {
+  margin-top: 12px;
+  font-size: 11.5px;
+  color: var(--text-tertiary);
+}
+
+.approval-card__details summary {
+  cursor: pointer;
+  user-select: none;
+  font-weight: 550;
+  color: var(--text-secondary);
+}
+
+.approval-card__details summary:hover {
+  color: var(--text-primary);
 }
 
 .approval-card__tech {
   margin-top: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
   color: var(--text-tertiary);
-  font: 10px var(--font-mono);
+}
+
+.approval-card__json {
+  max-height: 160px;
+  margin: 6px 0 0;
+  padding: 10px 12px;
+  overflow: auto;
+  border-radius: 6px;
+  border: 1px solid var(--border-separator);
+  background: var(--surface-grouped);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.5;
 }
 
 .approval-card__actions {
+  display: flex;
+  align-items: center;
   justify-content: flex-end;
-  margin-top: 15px;
+  gap: 8px;
+  margin-top: 16px;
 }
 
-/* 独立审批浮窗：中文信息优先，减少技术面板感。 */
+.approval-card__btn--caution {
+  border-color: var(--border-strong) !important;
+  color: var(--warning) !important;
+}
+
+.approval-card__btn--caution:hover {
+  background: rgba(229, 149, 0, 0.08) !important;
+  border-color: var(--warning) !important;
+}
+
+/* ========================================================================
+   独立无焦点审批浮窗 (ApprovalFloatingWindow) - 苹果 HIG Panel 规范
+   ======================================================================== */
 body.approval-app {
-  padding: 10px;
-  background: #efefec;
+  height: auto;
+  padding: 8px;
+  overflow: visible;
+  background: transparent;
+}
+
+body.approval-app #root {
+  height: auto;
+  min-height: 100%;
+  overflow: visible;
+  background: transparent;
 }
 
 .floating-approval {
+  box-sizing: border-box;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
-  padding: 0;
-  border: 1px solid rgba(72, 76, 68, .16);
-  border-radius: 15px;
-  background: rgba(255, 255, 255, .97);
-  box-shadow: 0 16px 42px rgba(35, 38, 33, .16);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  background: var(--surface-card);
+  backdrop-filter: blur(24px) saturate(190%);
+  -webkit-backdrop-filter: blur(24px) saturate(190%);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.22), 0 4px 12px rgba(0, 0, 0, 0.1);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  outline: none;
+}
+
+.floating-approval:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-subtle), 0 16px 36px rgba(0, 0, 0, 0.22);
 }
 
 .floating-approval__bar {
-  min-height: 42px;
-  padding: 0 17px;
-  border-bottom: 1px solid #ecece8;
-  background: #fafaf8;
+  -webkit-app-region: drag;
+  app-region: drag;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 38px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--border-separator);
+  background: var(--surface-grouped);
+  user-select: none;
 }
 
 .floating-approval__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
   color: var(--text-primary);
   font-size: 12px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
 }
 
 .floating-approval__dot {
   width: 7px;
   height: 7px;
+  border-radius: 50%;
   background: var(--accent);
 }
 
+.floating-approval__waiting {
+  color: var(--text-tertiary);
+  font-size: 11px;
+}
+
 .floating-approval__body {
-  margin-top: 0;
-  padding: 17px 18px 4px;
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+  padding: 16px 18px 4px;
 }
 
 .floating-approval__eyebrow {
-  color: var(--warning);
-  font-size: 10px;
-  letter-spacing: .08em;
+  color: var(--accent);
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
 .floating-approval__title {
-  margin: 6px 0 5px;
+  margin: 6px 0 4px;
   color: var(--text-primary);
-  font-size: 17px;
-  font-weight: 700;
+  font-size: 16.5px;
+  font-weight: 680;
+  letter-spacing: -0.01em;
+  line-height: 1.35;
+}
+
+.floating-approval__desc {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  line-height: 1.55;
 }
 
 .floating-approval__summary {
-  padding: 10px 12px;
-  border-color: #e3e3de;
-  border-radius: 9px;
-  background: #f6f6f3;
+  margin-top: 12px;
+  padding: 9px 12px;
+  border: 1px solid var(--border-separator);
+  border-radius: 8px;
+  background: var(--surface-grouped);
+  color: var(--text-primary);
+  font-size: 12.5px;
+  font-weight: 600;
   text-align: left;
 }
 
-.floating-approval__details,
-.floating-approval__error {
-  color: var(--text-tertiary);
-  font-size: 10.5px;
+.floating-approval__status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 8px 11px;
+  border-radius: 7px;
+  background: var(--accent-subtle);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 600;
 }
 
-.floating-approval__details summary,
-.floating-approval__error summary {
-  width: fit-content;
+.floating-approval__status-dot {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.floating-approval__status--working .floating-approval__status-dot {
+  animation: floating-approval-pulse 1.25s ease-in-out infinite;
+}
+
+.floating-approval__status--success {
+  background: rgba(41, 151, 104, 0.1);
+  color: var(--success);
+}
+
+.floating-approval__status--success .floating-approval__status-dot {
+  background: var(--success);
+}
+
+.floating-approval__status--danger {
+  background: rgba(229, 77, 77, 0.1);
+  color: var(--danger);
+}
+
+.floating-approval__status--danger .floating-approval__status-dot {
+  background: var(--danger);
+}
+
+.floating-approval__status--neutral {
+  background: var(--surface-grouped);
+  color: var(--text-secondary);
+}
+
+.floating-approval__status--neutral .floating-approval__status-dot {
+  background: var(--text-tertiary);
+}
+
+.floating-approval__details {
+  margin-top: 10px;
+  color: var(--text-tertiary);
+  font-size: 11px;
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+
+.floating-approval__details summary {
   cursor: pointer;
+  user-select: none;
+  color: var(--text-secondary);
+}
+
+.floating-approval__details summary:hover {
+  color: var(--text-primary);
+}
+
+.floating-approval__tech {
+  margin-top: 8px;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  overflow-wrap: anywhere;
+}
+
+.floating-approval__json {
+  max-height: 140px;
+  margin: 6px 0 0;
+  padding: 8px 10px;
+  overflow: auto;
+  border-radius: 6px;
+  border: 1px solid var(--border-separator);
+  background: var(--surface-grouped);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.floating-approval__details-footer {
+  margin-top: 8px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.floating-approval__hint {
+  color: var(--text-tertiary);
+  font-size: 10.5px;
+  line-height: 1.4;
+}
+
+.floating-approval__error {
+  margin-top: 10px;
+  color: var(--danger);
+  font-size: 11.5px;
+}
+
+.floating-approval__error summary {
+  cursor: pointer;
+  color: var(--danger);
 }
 
 .floating-approval__error code {
   display: block;
   margin-top: 7px;
   padding: 8px;
-  border-radius: 7px;
-  background: #fbf1ef;
-  color: #8b4b46;
-  font: 10px/1.45 var(--font-mono);
+  border-radius: 6px;
+  border: 1px solid rgba(229, 77, 77, 0.2);
+  background: rgba(229, 77, 77, 0.08);
+  color: var(--danger);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  line-height: 1.45;
   overflow-wrap: anywhere;
   white-space: pre-wrap;
 }
 
 .floating-approval__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
   margin-top: 14px;
-  padding: 13px 18px 16px;
-  border-top: 1px solid #ecece8;
-  background: #fafaf8;
+  padding: 12px 18px 14px;
+  border-top: 1px solid var(--border-separator);
+  background: var(--surface-grouped);
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
 }
 
 .floating-approval__btn {
-  min-height: 32px;
-  padding: 0 16px;
-  border-radius: 8px;
+  min-height: 28px;
+  padding: 0 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-button, 6px);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast),
+    opacity var(--transition-fast);
+}
+
+.floating-approval__btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.floating-approval__btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.floating-approval__btn--deny:hover:not(:disabled) {
+  background: var(--surface-grouped);
 }
 
 .floating-approval__btn--allow {
-  min-width: 76px;
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #ffffff;
+  min-width: 72px;
+}
+
+.floating-approval__btn--allow:hover:not(:disabled) {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
 }
 
 /* 新会话入口：保持轻盈的工作台感，同时给第一次使用提供明确方向。 */

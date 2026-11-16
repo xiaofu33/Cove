@@ -30,8 +30,8 @@
 | **P2** | 语义 Tokens 落地、工作区三栏骨架与路由保持 | builder | 🟢 已完成 | 落地 `tokens.css` (浅/深/高对比度)，重构 `App.tsx` 原生窗口工具栏与侧栏折叠，新增 `App.test.tsx` (241 测试通过) |
 | **P3** | 对话核心体验 (ChatPage, Composer, 消息与推理折叠) | builder | 🟢 已完成 | Composer 中文 IME 保护/高度自适应/快捷键，AssistantContent 代码高亮与纯净复制，ChatPage 滚动锚定与“回到最新”悬浮指示器 (243 测试通过) |
 | **P4** | 任务执行、运行控制与成果展示 | builder | 🟢 已完成 | 重构 CurrentTaskPanel 紧凑步骤树与状态符号，重构 PlanCard 独立确认蓝图；重构 ExecutionTrace 渐进披露（SF Mono 代码与 JSON 复制）；重构 ResultCard 成果卡片标准化 (245 测试通过) |
-| **P5** | 审批系统与 Computer Runtime 链路 | builder | 🟡 准备中 | 审批卡片/待办、后台非抢占浮窗与主界面状态同步 |
-| **P6** | 管理功能统一 (Runs, Automations, Memory, Settings) | builder | ⚪ 待开始 | 页面风格统一样式与状态反馈对齐 |
+| **P5** | 审批系统与 Computer Runtime 链路 | builder | 🟢 已完成 | 落地 ApprovalCard 风险等级三权分离（Prominent/Destructive）与键盘快捷操作；重构 ApprovalFloatingCard 无焦点半透明毛玻璃 HUD 浮窗与深浅色语义 Tokens；全面清除 index.css 写死样式 |
+| **P6** | 管理功能统一 (Runs, Automations, Memory, Settings) | builder | 🟡 进行中 | 页面风格统一样式与状态反馈对齐 |
 | **P7** | macOS 原生系统体验、深浅外观、可访问性与性能 | builder | ⚪ 待开始 | 主题自适应、键盘可达性、字体缩放与高负载测试 |
 | **P8** | 交付验证、文档更新与构建验收 | builder | ⚪ 待开始 | 打包验证、README 与最终交付物归档 |
 
@@ -64,8 +64,8 @@
 | **AC05** | 流式期间用户滚动锚定、文本选区保留与宽度自适应 | 🟢 已验证 | ChatPage 实现智能判断，离开底部时出现“回到最新”悬浮胶囊，阅读区设为 760px |
 | **AC06** | 网络异常与重连时不重发 mutation，状态权威查询 | ⚪ 未验证 | |
 | **AC07** | 计划模式接受/拒绝、中断与恢复语义区分 | 🟢 已验证 | PlanCard 独立确认蓝图与 CurrentTaskPanel 状态符号表征，单测通过 |
-| **AC08** | pending 审批双入口防重入与多端状态同步 | ⚪ 未验证 | |
-| **AC09** | 跨应用审批浮窗不夺取系统目标焦点 | ⚪ 未验证 | |
+| **AC08** | pending 审批双入口防重入与多端状态同步 | 🟢 已验证 | ApprovalCard 与 ApprovalFloatingCard 共享 FIFO 队列与防双击 busy 状态，支持键盘快捷处理 |
+| **AC09** | 跨应用审批浮窗不夺取系统目标焦点 | 🟢 已验证 | ApprovalFloatingCard 落实 focusable:false、毛玻璃 HUD 质感与深浅色语义 Tokens，避让系统热区并提供主窗口指引 |
 | **AC10** | 主窗口关闭后审批浮窗仍正常唤起，Dock 可重新恢复主窗口 | ⚪ 未验证 | |
 | **AC11** | 全键盘无障碍导航、焦点可见与快捷键支持 (Cmd+N, Cmd+, 等) | ⚪ 未验证 | |
 | **AC12** | 浅色/深色主题无缝切换，WCAG 2.1 AA 级对比度 | ⚪ 未验证 | |
@@ -89,4 +89,5 @@
 - `4aa4eb6`: `refactor(task): 重构 CurrentTaskPanel 与 PlanCard 步骤树及样式规范 (P4)`
 - `a7f9154`: `refactor(trace): 落实 ExecutionTrace 渐进式披露与 ResultCard 交付规范 (P4)`
 - `9c0af82`: `test(p4): 增加 PlanCard 步骤总数与 ResultCard 无障碍测试 (P4)`
+- `feat(approval): 完善审批卡片风险分离与无焦点毛玻璃浮窗视觉体系 (P5)`
 - 阶段验证结果：44 测试文件 245 用例全绿，类型检查 0 errors。
