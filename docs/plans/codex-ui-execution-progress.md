@@ -89,5 +89,5 @@
 - `4aa4eb6`: `refactor(task): 重构 CurrentTaskPanel 与 PlanCard 步骤树及样式规范 (P4)`
 - `a7f9154`: `refactor(trace): 落实 ExecutionTrace 渐进式披露与 ResultCard 交付规范 (P4)`
 - `9c0af82`: `test(p4): 增加 PlanCard 步骤总数与 ResultCard 无障碍测试 (P4)`
-- `feat(approval): 完善审批卡片风险分离与无焦点毛玻璃浮窗视觉体系 (P5)`
+- `2776a3a`: `feat(approval): 完善审批卡片风险分离与无焦点毛玻璃浮窗视觉体系 (P5)`
 - 阶段验证结果：44 测试文件 245 用例全绿，类型检查 0 errors。
