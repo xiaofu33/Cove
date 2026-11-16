@@ -79,6 +79,126 @@ summary:focus-visible {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  background: var(--surface-window);
+}
+
+/* macOS 原生风格顶栏工具条 (Titlebar / Toolbar) */
+.window-toolbar {
+  height: 42px;
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px 0 12px;
+  background: var(--surface-window);
+  border-bottom: 1px solid var(--border-separator);
+  -webkit-app-region: drag;
+  user-select: none;
+  z-index: 20;
+}
+
+.window-toolbar__left,
+.window-toolbar__right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  -webkit-app-region: no-drag;
+}
+
+.window-toolbar__btn {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: var(--radius-sm, 6px);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.window-toolbar__btn:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.window-toolbar__btn:active {
+  background: var(--surface-active);
+}
+
+.window-toolbar__title {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: var(--text-size-headline, 14px);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.window-toolbar__page-title {
+  letter-spacing: -0.01em;
+}
+
+.window-toolbar__subtitle {
+  font-size: var(--text-size-caption, 12px);
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+.window-toolbar__status-capsule {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: var(--radius-full, 9999px);
+  font-size: var(--text-size-caption, 12px);
+  font-weight: 500;
+  background: var(--surface-grouped);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-separator);
+}
+
+.window-toolbar__status-capsule--connected {
+  color: var(--text-primary);
+}
+
+.window-toolbar__status-capsule--running {
+  background: var(--accent-subtle);
+  color: var(--accent-primary);
+  border-color: rgba(0, 113, 227, 0.25);
+}
+
+.window-toolbar__status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.window-toolbar__status-dot--ready {
+  background: var(--status-success);
+}
+
+.window-toolbar__status-dot--offline {
+  background: var(--text-tertiary);
+}
+
+.pulse {
+  background: var(--accent-primary);
+  animation: pulse-dot 1.8s infinite;
+}
+
+@keyframes pulse-dot {
+  0% {
+    box-shadow: 0 0 0 0 rgba(0, 113, 227, 0.6);
+  }
+  70% {
+    box-shadow: 0 0 0 5px rgba(0, 113, 227, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 113, 227, 0);
+  }
 }
 
 .page {
@@ -224,8 +344,8 @@ summary:focus-visible {
   flex: 0 0 248px;
   min-width: 0;
   overflow: hidden;
-  background: #101217;
-  border-right: 1px solid var(--border-subtle);
+  background: var(--surface-sidebar);
+  border-right: 1px solid var(--border-separator);
   transition: width var(--transition-layout), flex-basis var(--transition-layout),
     border-color var(--transition-layout);
 }
