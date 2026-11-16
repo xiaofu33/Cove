@@ -39,11 +39,13 @@ export default function ChatPage({
   onOpenRun,
   initialConversationId,
   onConversationChange,
+  sidebarCollapsed,
 }: {
   onNavigate?: (page: PageKey) => void
   onOpenRun?: (runId: string) => void
   initialConversationId?: string | null
   onConversationChange?: (conversationId: string | null) => void
+  sidebarCollapsed?: boolean
 }): React.JSX.Element {
   const queryClient = useQueryClient()
   const eventsByRun = useEventsStore((state) => state.eventsByRun)
@@ -55,9 +57,17 @@ export default function ChatPage({
   const [lastRunId, setLastRunId] = useState<string | null>(null)
   const [mode, setMode] = useState<AgentMode>('normal')
   const [draft, setDraft] = useState('')
-  const [conversationSidebarOpen, setConversationSidebarOpen] = useState(true)
+  const [conversationSidebarOpen, setConversationSidebarOpen] = useState(
+    sidebarCollapsed !== undefined ? !sidebarCollapsed : true,
+  )
   const [runInspectorOpen, setRunInspectorOpen] = useState(false)
   const [planTask, setPlanTask] = useState<Task | null>(null)
+
+  useEffect(() => {
+    if (typeof sidebarCollapsed === 'boolean') {
+      setConversationSidebarOpen(!sidebarCollapsed)
+    }
+  }, [sidebarCollapsed])
   const [planResolved, setPlanResolved] = useState<string | null>(null)
   const [optimisticMessage, setOptimisticMessage] = useState<{
     conversationId: string

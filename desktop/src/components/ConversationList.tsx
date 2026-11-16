@@ -1,18 +1,27 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Conversation } from '../api/types'
 import { Icon } from './Icon'
 
 const PINNED_KEY = 'vesta.pinnedConversations'
+const COLLAPSED_PROJECTS_KEY = 'vesta.collapsedProjects'
 
-function loadPinned(): string[] {
+function loadFromStorage(key: string): string[] {
   try {
-    const raw = localStorage.getItem(PINNED_KEY)
+    const raw = localStorage.getItem(key)
     const parsed = raw ? JSON.parse(raw) : []
     return Array.isArray(parsed)
       ? parsed.filter((x): x is string => typeof x === 'string')
       : []
   } catch {
     return []
+  }
+}
+
+function saveToStorage(key: string, value: string[]): void {
+  try {
+    localStorage.setItem(key, JSON.stringify(value))
+  } catch {
+    /* 忽略存储异常 */
   }
 }
 
@@ -38,6 +47,20 @@ function relativeTime(iso: string): string {
   return `${days}d`
 }
 
+/** 解析会话标题中的项目名（例如 "[vesta] 评估原生 AppKit 重构工作量" 或 "求职网站 / 应用 Notion"） */
+function extractProjectAndTitle(rawTitle: string): { project: string | null; cleanTitle: string } {
+  const title = rawTitle.trim()
+  const bracketMatch = title.match(/^\[(.*?)\]\s*(.*)$/)
+  if (bracketMatch) {
+    return { project: bracketMatch[1].trim(), cleanTitle: bracketMatch[2].trim() || bracketMatch[1].trim() }
+  }
+  const slashMatch = title.match(/^(.*?)\s*[/／]\s*(.*)$/)
+  if (slashMatch) {
+    return { project: slashMatch[1].trim(), cleanTitle: slashMatch[2].trim() }
+  }
+  return { project: null, cleanTitle: title }
+}
+
 export default function ConversationList({
   conversations,
   selectedId,
@@ -47,6 +70,8 @@ export default function ConversationList({
   onDelete,
   statusByConversation = {},
   activityByConversation = {},
+  onOpenSearch,
+  pendingApprovalsCount = 0,
 }: {
   conversations: Conversation[]
   selectedId: string | null
@@ -56,53 +81,61 @@ export default function ConversationList({
   onRename?: (id: string, title: string) => void | Promise<void>
   /** 删除会话（接入后端）。 */
   onDelete?: (id: string) => void | Promise<void>
-  /** conversationId → 最近 run 状态（Agent workspace 感：状态比消息数更重要）。 */
+  /** conversationId → 最近 run 状态。 */
   statusByConversation?: Record<string, string>
-  /** conversationId → 当前人类可读动作，如 “Typing in Notes”。 */
+  /** conversationId → 当前人类可读动作。 */
   activityByConversation?: Record<string, string>
+  /** 点击搜索放大镜呼出全局命令面板。 */
+  onOpenSearch?: () => void
+  /** 待处理审批通知数。 */
+  pendingApprovalsCount?: number
 }): React.JSX.Element {
-  const [pinned, setPinned] = useState<string[]>(loadPinned)
+  const [pinned, setPinned] = useState<string[]>(() => loadFromStorage(PINNED_KEY))
+  const [collapsedProjects, setCollapsedProjects] = useState<string[]>(() =>
+    loadFromStorage(COLLAPSED_PROJECTS_KEY),
+  )
+  const [workspaceMenuOpen, setWorkspaceMenuOpen] = useState(false)
   const [menuFor, setMenuFor] = useState<string | null>(null)
   const menuRef = useRef<HTMLDivElement | null>(null)
+  const workspaceDropdownRef = useRef<HTMLDivElement | null>(null)
 
-  // 点击菜单外部关闭。
+  // 内联重命名状态
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editingValue, setEditingValue] = useState('')
+
+  // 点击外部关闭弹出菜单
   useEffect(() => {
-    if (menuFor === null) return
+    if (menuFor === null && !workspaceMenuOpen) return
     const onPointer = (event: MouseEvent): void => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+      const target = event.target as Node
+      if (menuRef.current && !menuRef.current.contains(target)) {
         setMenuFor(null)
+      }
+      if (workspaceDropdownRef.current && !workspaceDropdownRef.current.contains(target)) {
+        setWorkspaceMenuOpen(false)
       }
     }
     document.addEventListener('mousedown', onPointer)
     return () => document.removeEventListener('mousedown', onPointer)
-  }, [menuFor])
+  }, [menuFor, workspaceMenuOpen])
 
   const togglePin = (id: string): void => {
     setPinned((prev) => {
-      const next = prev.includes(id)
-        ? prev.filter((p) => p !== id)
-        : [id, ...prev]
-      try {
-        localStorage.setItem(PINNED_KEY, JSON.stringify(next))
-      } catch {
-        /* 持久化失败不影响本次置顶 */
-      }
+      const next = prev.includes(id) ? prev.filter((p) => p !== id) : [id, ...prev]
+      saveToStorage(PINNED_KEY, next)
       return next
     })
   }
 
-  // 置顶会话排在最前。
-  const ordered = [...conversations].sort((a, b) => {
-    const ai = pinned.includes(a.id) ? 0 : 1
-    const bi = pinned.includes(b.id) ? 0 : 1
-    return ai - bi
-  })
-  // 第一个未置顶会话的索引（用于置顶/未置顶分界线）。
-  const firstUnpinnedIndex = ordered.findIndex((c) => !pinned.includes(c.id))
-
-  // 内联重命名状态（Electron 不实现 window.prompt，改用输入框）。
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [editingValue, setEditingValue] = useState('')
+  const toggleProjectCollapse = (projectName: string): void => {
+    setCollapsedProjects((prev) => {
+      const next = prev.includes(projectName)
+        ? prev.filter((p) => p !== projectName)
+        : [...prev, projectName]
+      saveToStorage(COLLAPSED_PROJECTS_KEY, next)
+      return next
+    })
+  }
 
   const startRename = (id: string, current: string): void => {
     setEditingValue(current)
@@ -118,131 +151,302 @@ export default function ConversationList({
   }
 
   const runDelete = (id: string): void => {
-    // Electron 不实现 window.confirm，直接执行删除（可恢复为新建）。
     void onDelete?.(id)
     setMenuFor(null)
   }
 
+  // 分类与项目树计算
+  const { pinnedItems, projectGroups, recentItems } = useMemo(() => {
+    const pinnedList: Conversation[] = []
+    const projectMap = new Map<string, Conversation[]>()
+    const recentList: Conversation[] = []
+
+    for (const conv of conversations) {
+      if (pinned.includes(conv.id)) {
+        pinnedList.push(conv)
+      } else {
+        const { project } = extractProjectAndTitle(conv.title || '')
+        if (project) {
+          if (!projectMap.has(project)) {
+            projectMap.set(project, [])
+          }
+          projectMap.get(project)!.push(conv)
+        } else {
+          recentList.push(conv)
+        }
+      }
+    }
+
+    return {
+      pinnedItems: pinnedList,
+      projectGroups: Array.from(projectMap.entries()).map(([name, items]) => ({
+        name,
+        items,
+      })),
+      recentItems: recentList,
+    }
+  }, [conversations, pinned])
+
+  const renderConversationItem = (
+    conv: Conversation,
+    options?: { indent?: boolean; isNestedInProject?: boolean },
+  ): React.JSX.Element => {
+    const status = statusByConversation[conv.id]
+    const meta = status ? STATUS_META[status] : undefined
+    const activity = activityByConversation[conv.id]
+    const isPinned = pinned.includes(conv.id)
+    const isSelected = selectedId === conv.id
+    const { cleanTitle } = extractProjectAndTitle(conv.title || '')
+
+    return (
+      <div
+        key={conv.id}
+        className={`conversation-item ${isSelected ? 'active' : ''} ${
+          options?.indent ? 'conversation-item--indent' : ''
+        }`}
+      >
+        <button
+          type="button"
+          className="conversation-item__main"
+          onClick={() => onSelect(conv.id)}
+          aria-current={isSelected ? 'true' : undefined}
+        >
+          {editingId === conv.id ? (
+            <input
+              className="conversation-item__edit"
+              value={editingValue}
+              autoFocus
+              aria-label="编辑会话标题"
+              onClick={(event) => event.stopPropagation()}
+              onChange={(event) => setEditingValue(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault()
+                  commitRename(conv.id, conv.title || '')
+                } else if (event.key === 'Escape') {
+                  setEditingId(null)
+                }
+              }}
+              onBlur={() => {
+                if (editingId === conv.id) {
+                  commitRename(conv.id, conv.title || '')
+                }
+              }}
+            />
+          ) : (
+            <div className="conversation-item__row">
+              <span className="conversation-item__title">
+                {isPinned && !options?.isNestedInProject ? (
+                  <Icon name="pin" size={11} className="conversation-item__pin-icon" />
+                ) : null}
+                {cleanTitle || '未命名工作'}
+              </span>
+              {status === 'running' ? (
+                <span className="conversation-item__status-icon" title="运行中">
+                  <Icon name="refresh" size={11} className="spin" />
+                </span>
+              ) : null}
+            </div>
+          )}
+
+          <span className="conversation-item__meta">
+            {meta ? (
+              <span
+                className={`conversation-item__status conversation-item__status--${meta.tone}`}
+              >
+                {status === 'completed' ? '✓' : meta.label}
+              </span>
+            ) : null}
+            <span>{relativeTime(conv.updated_at)}</span>
+          </span>
+
+          {activity && ['running', 'pending'].includes(status ?? '') ? (
+            <span className="conversation-item__activity">{activity}</span>
+          ) : null}
+        </button>
+
+        <button
+          type="button"
+          className="conversation-item__more"
+          aria-label="更多操作"
+          title="更多操作"
+          onClick={(event) => {
+            event.stopPropagation()
+            setMenuFor((cur) => (cur === conv.id ? null : conv.id))
+          }}
+        >
+          <Icon name="more" size={14} />
+        </button>
+
+        {menuFor === conv.id ? (
+          <div className="conversation-menu" ref={menuRef} role="menu">
+            <button type="button" role="menuitem" onClick={() => togglePin(conv.id)}>
+              <Icon name="pin" size={13} />
+              {isPinned ? '取消置顶' : '置顶'}
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => startRename(conv.id, conv.title || '')}
+            >
+              <Icon name="pencil" size={13} />
+              编辑
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              className="conversation-menu__danger"
+              onClick={() => runDelete(conv.id)}
+            >
+              <Icon name="trash" size={13} />
+              删除
+            </button>
+          </div>
+        ) : null}
+      </div>
+    )
+  }
+
   return (
     <div className="conversation-sidebar__content">
+      {/* 顶部 Header：工作区切换 + 搜索与通知 */}
       <div className="conversation-sidebar__top">
-        <div className="conversation-sidebar__label">工作</div>
-        <button className="new-conversation" type="button" onClick={onNew}>
-          <Icon name="plus" size={14} />
-          新建
+        <div className="conversation-sidebar__workspace" ref={workspaceDropdownRef}>
+          <button
+            type="button"
+            className="conversation-sidebar__workspace-btn"
+            onClick={() => setWorkspaceMenuOpen((open) => !open)}
+            aria-label="切换工作区"
+          >
+            <span className="conversation-sidebar__workspace-name">Vesta</span>
+            <Icon name="chevronDown" size={12} className="conversation-sidebar__workspace-chevron" />
+          </button>
+          <span className="conversation-sidebar__label sr-only">工作</span>
+
+          {workspaceMenuOpen ? (
+            <div className="workspace-dropdown" role="menu">
+              <div className="workspace-dropdown__header">工作区 / 项目</div>
+              <button
+                type="button"
+                className="workspace-dropdown__item active"
+                onClick={() => setWorkspaceMenuOpen(false)}
+              >
+                <Icon name="folder" size={13} />
+                <span>vesta (当前工作区)</span>
+              </button>
+            </div>
+          ) : null}
+        </div>
+
+        <div className="conversation-sidebar__actions">
+          <button
+            type="button"
+            className="conversation-sidebar__icon-btn"
+            onClick={onOpenSearch}
+            title="全局搜索 (⌘K)"
+            aria-label="全局搜索"
+          >
+            <Icon name="search" size={14} />
+          </button>
+          <button
+            type="button"
+            className="conversation-sidebar__icon-btn"
+            title={pendingApprovalsCount > 0 ? `${pendingApprovalsCount} 条待审批` : '通知'}
+            aria-label="通知"
+          >
+            <Icon name="bell" size={14} />
+            {pendingApprovalsCount > 0 ? (
+              <span className="conversation-sidebar__dot" />
+            ) : null}
+          </button>
+        </div>
+      </div>
+
+      {/* 快速新建工作按钮：带笔图标通栏按钮 */}
+      <div className="conversation-sidebar__new-section">
+        <button
+          className="new-conversation"
+          type="button"
+          onClick={onNew}
+          title="新建对话或工作 (⌘N)"
+          aria-label="新建工作对话"
+        >
+          <Icon name="pencil" size={14} className="new-conversation__icon" />
+          <span className="new-conversation__text">新聊天</span>
         </button>
       </div>
+
+      {/* 会话与项目分类树 */}
       <div className="conversation-list">
         {conversations.length === 0 ? (
           <div className="conversation-list__empty">暂无对话</div>
         ) : null}
-        {ordered.map((conversation, index) => {
-          const status = statusByConversation[conversation.id]
-          const meta = status ? STATUS_META[status] : undefined
-          const activity = activityByConversation[conversation.id]
-          const isPinned = pinned.includes(conversation.id)
-          const showDivider = index === firstUnpinnedIndex && firstUnpinnedIndex > 0
-          return (
-            <div key={conversation.id} className="conversation-list__row">
-              {showDivider ? (
-                <div className="conversation-list__divider" aria-hidden="true" />
-              ) : null}
-              <div
-                className={`conversation-item ${selectedId === conversation.id ? 'active' : ''}`}
-              >
-              <button
-                type="button"
-                className="conversation-item__main"
-                onClick={() => onSelect(conversation.id)}
-                aria-current={selectedId === conversation.id ? 'true' : undefined}
-              >
-                {editingId === conversation.id ? (
-                  <input
-                    className="conversation-item__edit"
-                    value={editingValue}
-                    autoFocus
-                    aria-label="编辑会话标题"
-                    onClick={(event) => event.stopPropagation()}
-                    onChange={(event) => setEditingValue(event.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter') {
-                        event.preventDefault()
-                        commitRename(conversation.id, conversation.title || '')
-                      } else if (event.key === 'Escape') {
-                        setEditingId(null)
-                      }
-                    }}
-                    onBlur={() => {
-                      if (editingId === conversation.id) {
-                        commitRename(conversation.id, conversation.title || '')
-                      }
-                    }}
-                  />
-                ) : (
-                  <span className="conversation-item__title">
-                    {isPinned ? <Icon name="pin" size={11} /> : null}
-                    {conversation.title || '未命名对话'}
-                  </span>
-                )}
-                <span className="conversation-item__meta">
-                  {meta ? (
-                    <span
-                      className={`conversation-item__status conversation-item__status--${meta.tone}`}
-                    >
-                      {status === 'completed' ? '✓' : meta.label}
-                    </span>
-                  ) : null}
-                  <span>{relativeTime(conversation.updated_at)}</span>
-                </span>
-                {activity && ['running', 'pending'].includes(status ?? '') ? (
-                  <span className="conversation-item__activity">{activity}</span>
-                ) : null}
-              </button>
-              <button
-                type="button"
-                className="conversation-item__more"
-                aria-label="更多操作"
-                title="更多操作"
-                onClick={(event) => {
-                  event.stopPropagation()
-                  setMenuFor((cur) => (cur === conversation.id ? null : conversation.id))
-                }}
-              >
-                <Icon name="more" size={15} />
-              </button>
-              {menuFor === conversation.id ? (
-                <div className="conversation-menu" ref={menuRef} role="menu">
-                  <button
-                    type="button"
-                    role="menuitem"
-                    onClick={() => togglePin(conversation.id)}
-                  >
-                    <Icon name="pin" size={13} />
-                    {isPinned ? '取消置顶' : '置顶'}
-                  </button>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    onClick={() => startRename(conversation.id, conversation.title || '')}
-                  >
-                    <Icon name="pencil" size={13} />
-                    编辑
-                  </button>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="conversation-menu__danger"
-                    onClick={() => runDelete(conversation.id)}
-                  >
-                    <Icon name="trash" size={13} />
-                    删除
-                  </button>
-                </div>
-              ) : null}
-              </div>
+
+        {/* 分组 1：置顶 (Pinned) */}
+        {pinnedItems.length > 0 ? (
+          <div className="conversation-group">
+            <div className="conversation-group__title">置顶</div>
+            <div className="conversation-group__items">
+              {pinnedItems.map((conv) => renderConversationItem(conv))}
             </div>
-          )
-        })}
+          </div>
+        ) : null}
+
+        {/* 分组 2：项目 (Projects) */}
+        {projectGroups.length > 0 ? (
+          <div className="conversation-group">
+            <div className="conversation-group__title">项目</div>
+            <div className="conversation-group__items">
+              {projectGroups.map(({ name, items }) => {
+                const isCollapsed = collapsedProjects.includes(name)
+                return (
+                  <div key={name} className="project-node">
+                    <button
+                      type="button"
+                      className="project-node__header"
+                      onClick={() => toggleProjectCollapse(name)}
+                    >
+                      <Icon
+                        name={isCollapsed ? 'chevronRight' : 'chevronDown'}
+                        size={12}
+                        className="project-node__chevron"
+                      />
+                      <Icon
+                        name={isCollapsed ? 'folder' : 'folderOpen'}
+                        size={14}
+                        className="project-node__folder"
+                      />
+                      <span className="project-node__title">{name}</span>
+                      <span className="project-node__count">{items.length}</span>
+                    </button>
+                    {!isCollapsed ? (
+                      <div className="project-node__children">
+                        {items.map((conv) =>
+                          renderConversationItem(conv, {
+                            indent: true,
+                            isNestedInProject: true,
+                          }),
+                        )}
+                      </div>
+                    ) : null}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        ) : null}
+
+        {/* 分组 3：最近 (Recent) */}
+        {recentItems.length > 0 ? (
+          <div className="conversation-group">
+            {pinnedItems.length > 0 || projectGroups.length > 0 ? (
+              <div className="conversation-group__title">最近</div>
+            ) : null}
+            <div className="conversation-group__items">
+              {recentItems.map((conv) => renderConversationItem(conv))}
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   )

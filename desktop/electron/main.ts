@@ -132,6 +132,12 @@ function createWindow(): void {
     minWidth: 1100,
     minHeight: 640,
     title: 'Vesta',
+    ...(process.platform === 'darwin'
+      ? {
+          titleBarStyle: 'hiddenInset' as const,
+          trafficLightPosition: { x: 16, y: 14 },
+        }
+      : {}),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       // 安全边界：Renderer 不获得任意 Node 权限。

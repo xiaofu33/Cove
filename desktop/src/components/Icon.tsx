@@ -4,14 +4,26 @@ import {
   Activity,
   AlertCircle,
   Archive,
+  ArrowLeft,
+  ArrowRight,
+  AtSign,
+  Bell,
+  BookOpen,
   Bot,
   Brain,
   Check,
   ChevronDown,
+  ChevronRight,
+  Circle,
+  Clock,
   Clock3,
+  Code2,
   Download,
   ExternalLink,
   FileText,
+  Folder,
+  FolderOpen,
+  LayoutGrid,
   ListChecks,
   MessageSquare,
   Monitor,
@@ -22,10 +34,13 @@ import {
   Pencil,
   Pin,
   Plus,
+  RotateCw,
+  Search,
   Send,
   Settings,
   ShieldCheck,
   Trash2,
+  User,
   Workflow,
   X,
   type LucideIcon,
@@ -45,6 +60,7 @@ export type IconName =
   | 'plus'
   | 'send'
   | 'chevronDown'
+  | 'chevronRight'
   | 'download'
   | 'external'
   | 'check'
@@ -60,6 +76,20 @@ export type IconName =
   | 'pin'
   | 'pencil'
   | 'trash'
+  | 'bell'
+  | 'search'
+  | 'folder'
+  | 'folderOpen'
+  | 'arrowLeft'
+  | 'arrowRight'
+  | 'refresh'
+  | 'clock'
+  | 'book'
+  | 'at'
+  | 'code'
+  | 'grid'
+  | 'user'
+  | 'circle'
 
 const ICONS: Record<IconName, LucideIcon> = {
   chat: MessageSquare,
@@ -73,6 +103,7 @@ const ICONS: Record<IconName, LucideIcon> = {
   plus: Plus,
   send: Send,
   chevronDown: ChevronDown,
+  chevronRight: ChevronRight,
   download: Download,
   external: ExternalLink,
   check: Check,
@@ -88,6 +119,20 @@ const ICONS: Record<IconName, LucideIcon> = {
   pin: Pin,
   pencil: Pencil,
   trash: Trash2,
+  bell: Bell,
+  search: Search,
+  folder: Folder,
+  folderOpen: FolderOpen,
+  arrowLeft: ArrowLeft,
+  arrowRight: ArrowRight,
+  refresh: RotateCw,
+  clock: Clock,
+  book: BookOpen,
+  at: AtSign,
+  code: Code2,
+  grid: LayoutGrid,
+  user: User,
+  circle: Circle,
 }
 
 export interface IconProps extends Omit<LucideProps, 'name'> {
