@@ -90,5 +90,5 @@
 - `a7f9154`: `refactor(trace): 落实 ExecutionTrace 渐进式披露与 ResultCard 交付规范 (P4)`
 - `9c0af82`: `test(p4): 增加 PlanCard 步骤总数与 ResultCard 无障碍测试 (P4)`
 - `2776a3a`: `feat(approval): 完善审批卡片风险分离与无焦点毛玻璃浮窗视觉体系 (P5)`
-- `feat(settings): 统一管理与设置系统视觉规范，清除硬编码并中文化 (P6)`
+- `7df1467`: `feat(settings): 统一管理与设置系统视觉规范，清除硬编码并中文化 (P6)`
 - 阶段验证结果：44 测试文件 245 用例全绿，类型检查 0 errors。
