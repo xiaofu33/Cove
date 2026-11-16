@@ -79,7 +79,50 @@
 
 ---
 
-## 3. D01–D14 设计规则逐项合规对照表
+## 3. P4 专项审查：步骤任务面板、工具执行折叠卡片与成果交付卡片
+
+依据 coordinator 协同指令，基于 `generative-ai.md`、`progress-indicators.md`、`disclosure-controls.md` 对 P4 核心组件进行专项审查：
+
+### 3.1 步骤任务面板 (CurrentTaskPanel & PlanCard) 审查
+- **HIG 依据**：
+  - `progress-indicators.md › Best practices`：“When possible, use a determinate progress indicator... Be as accurate as possible when reporting advancement in a determinate progress indicator.”
+  - `generative-ai.md › Best practices`：“Keep people in control... Give them the ability to dismiss new content they don’t want, and revert or retry content transformations or other actions they don’t agree with.”
+- **设计审查要点**：
+  1. **确定性进度展示**：严禁伪造模糊的百分比（如“已完成 60%”），必须展示确切的步骤数（如 `步骤 2/4`）。每一步清晰标注“已完成（✓ 绿对勾）”、“执行中（● 蓝色脉冲）”、“待执行（○ 虚线圈）”或“阻塞待审批（⚠️ 琥珀色标）”。
+  2. **计划确认交互规范**：
+     - 计划生成完成后，必须冻结直接执行，显式等待用户操作。
+     - 接受按钮使用 macOS 标准的 `.prominent` 样式（主强调色底），文案为“批准并执行计划”；修改/拒绝按钮使用次级边框样式；取消使用 Destructive 样式。
+     - 支持标准快捷键：`⌘⏎` 确认执行计划，`Esc` 拒绝/取消。
+
+### 3.2 工具执行折叠卡片 (LiveAgentTurn & RunActivity) 审查
+- **HIG 依据**：
+  - `disclosure-controls.md › Best practices`：“Use a disclosure control to hide details until they’re relevant. Place controls that people are most likely to use at the top of the disclosure hierarchy so they’re always visible, with more advanced functionality hidden by default.”
+  - `disclosure-controls.md › Disclosure triangles`：“A disclosure triangle points inward from the leading edge when its content is hidden and down when its content is visible... Provide a descriptive label when using a disclosure triangle.”
+  - `generative-ai.md › Outputs`：“Messages that describe what’s actually happening can be more helpful than a vague status message. For example, instead of 'Processing...', say 'Finding substitutions for ingredients' or 'Summarizing key themes from your notes.'”
+- **设计审查要点**：
+  1. **渐进式披露与单行摘要**：
+     - 工具调用默认**绝对不展开大段 JSON 入参与终端 Stdout**。
+     - 默认收拢为单行紧凑条：左侧为标准 Disclosure Triangle（折叠向右、展开向下）+ 工具图标（如 `⚙︎`），中间为可读动作（如 `bash.execute: npm test`），右侧为执行耗时（如 `1.4s`）与成功状态图标。
+  2. **展开区规范**：
+     - 用户点击展开后，参数展示采用 12pt 等宽字体（SF Mono）与 `--surface-grouped` 弱灰底色，代码高亮区分键值；
+     - 执行失败时，卡片自动切换为警告红边框并默认展开错误信息，同时提供“重试此步”或“跳过并继续”的明确指引，符合 `writing.md` 对错误处理的建议。
+
+### 3.3 成果交付卡片 (ResultCard & ArtifactList) 审查
+- **HIG 依据**：
+  - `layout.md › Visual hierarchy`：“Order content by relative importance... Group related items.”
+  - `generative-ai.md › Outputs`：“Make it easy for people to refine or revert generated results, and acknowledge when their corrections take effect.”
+- **设计审查要点**：
+  1. **价值沉淀与视觉定位**：
+     - 交付成果（Artifacts）是 Agent 工作的终极交付物，必须在消息流最末尾及右侧检查器中有清晰的归宿，绝不能淹没在漫长的对话流中。
+  2. **标准化卡片构图**：
+     - 卡片采用 `--surface-card` 容器，1pt 细边框；
+     - 左侧按文件类型展示对应图标（代码文件 `code`、配置文件 `file-text`、图片 `image`、打包文件 `archive`）；
+     - 中间显示文件名（加粗 13pt）与文件大小（12pt 次级灰）；
+     - 右侧提供“在访达中显示（Reveal in Finder）”、“复制路径”与“打开预览”快捷操作按钮，每个按钮点击热区均满足 ≥ 28×28pt。
+
+---
+
+## 4. D01–D14 设计规则逐项合规对照表
 
 严格对照执行计划（`2026-11-16-codex-style-ui-ux-plan.md`）第 3.4 节所列的 14 项设计硬性规则：
 
@@ -102,17 +145,17 @@
 
 ---
 
-## 4. 优化建议与落地注意项 (Improvements)
+## 5. 优化建议与落地注意项 (Improvements)
 
-虽然规范设计在整体架构与合规性上表现优异，但在后续代码重构（P2/P3 阶段）落地时，仍需在工程实现上重点关注以下两点：
+虽然规范设计在整体架构与合规性上表现优异，但在 P4 阶段组件实现落地时，仍需在工程实现上重点关注以下两点：
 
-1. **[Medium] 中文输入法 IME 组合键边界防护**：
-   - 在开发 `Composer.tsx` 时，除原生 `compositionstart/compositionend` 外，必须同步检查键盘事件的 `event.isComposing` 与 `keyCode === 229`，防止部分第三方输入法在特定 macOS 版本下的提前冒泡导致消息意外发送。
-2. **[Medium] 长文本流式渲染的 DOM 锚定性能**：
-   - 流式增量期间务必严格执行 33–50ms 的节流合并，并在 React 中对已完成的历史消息进行 `React.memo` 隔离，避免单个新 Token 到达引发整条历史树的无谓重新渲染与滚动跳动。
+1. **[Medium] 工具调用的性能与虚拟化兜底**：
+   - 当单个 Run 触发多达数十次工具调用时，收折状态的卡片 DOM 节点需要保持轻量，未展开的入参和输出不应提前解析和高亮渲染，采用按需懒加载（Lazy Load / Render-on-expand）机制。
+2. **[Medium] 步骤面板状态更新无闪烁**：
+   - 步骤状态从 Pending 转为 In Progress 或 Completed 时，仅更新对应行状态指示器，避免重载整个 Plan 容器导致焦点重置。
 
 ---
 
-## 5. 结论
+## 6. 结论
 
-本套设计规范（`design-spec.md`）、对标分析（`codex-reference.md`）与评审结论（`design-review.md`）构成了完整、严谨且可落地的设计基线，完全满足 P1 阶段的所有交付与验收标准，可直接作为 Builder 实施 P2/P3 代码重构与组件构建的权威指导手册。
+更新后的设计审查报告全面涵盖了 P0-P4 阶段的交互组件与流程范式，重点规范了步骤任务面板、工具执行渐进折叠及成果交付卡片，为 builder 推进 P4 代码重构提供了直接可对照的 HIG 规范与验收标准。
