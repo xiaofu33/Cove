@@ -26,9 +26,9 @@
 | 阶段 | 任务目标 | 负责人 | 状态 | 交付物 / 备注 |
 |---|---|---|---|---|
 | **P0** | 核对现场、建立基线与进度追踪矩阵 | builder | 🟢 已完成 | 建立 `codex-ui-execution-progress.md`，跑通 240 个基线测试 |
-| **P1** | 视觉与交互规范设计、Codex 参考与 HIG 评审 | designer | 🟡 进行中 | `design-spec.md`, `codex-reference.md`, `design-review.md` |
-| **P2** | 语义 Tokens 落地、工作区三栏骨架与路由保持 | builder | ⚪ 待开始 | `tokens.css`, `App.tsx` 侧边栏/主区/检查器三栏重构，测试通过后提交 |
-| **P3** | 对话核心体验 (ChatPage, Composer, 消息与推理折叠) | builder | ⚪ 待开始 | Composer 中文输入/快捷键优化、AssistantReasoning 折叠、代码高亮与复制 |
+| **P1** | 视觉与交互规范设计、Codex 参考与 HIG 评审 | designer | 🟢 已完成 | `design-spec.md`, `codex-reference.md`, `design-review.md` (全优评级) |
+| **P2** | 语义 Tokens 落地、工作区三栏骨架与路由保持 | builder | 🟢 已完成 | 落地 `tokens.css` (浅/深/高对比度)，重构 `App.tsx` 原生窗口工具栏与侧栏折叠，新增 `App.test.tsx` (241 测试通过) |
+| **P3** | 对话核心体验 (ChatPage, Composer, 消息与推理折叠) | builder | 🟢 已完成 | Composer 中文 IME 保护/高度自适应/快捷键，AssistantContent 代码高亮与纯净复制，ChatPage 滚动锚定与“回到最新”悬浮指示器 (243 测试通过) |
 | **P4** | 任务执行、运行控制与成果展示 | builder | ⚪ 待开始 | 任务摘要、LiveAgentTurn/Trace 优化、cancel/interrupt/recover、Artifact 交互 |
 | **P5** | 审批系统与 Computer Runtime 链路 | builder | ⚪ 待开始 | 审批卡片/待办、后台非抢占浮窗与主界面状态同步 |
 | **P6** | 管理功能统一 (Runs, Automations, Memory, Settings) | builder | ⚪ 待开始 | 页面风格统一样式与状态反馈对齐 |
@@ -59,9 +59,9 @@
 |---|---|---|---|
 | **AC01** | 冷启动与 Host 离线连接提示，草稿不丢 | ⚪ 未验证 | |
 | **AC02** | 新建→发送→流式正文→完成，历史一致无重复 | ⚪ 未验证 | |
-| **AC03** | macOS 中文输入法 Return 候选确认不误发送，撤销与多行 | ⚪ 未验证 | |
+| **AC03** | macOS 中文输入法 Return 候选确认不误发送，撤销与多行 | 🟢 已验证 | Composer 实现 compositionstart/end 与 isComposing 拦截，添加自动化单测保障 |
 | **AC04** | 运行时切会话不串流，后台持续更新 | ⚪ 未验证 | |
-| **AC05** | 流式期间用户滚动锚定、文本选区保留与宽度自适应 | ⚪ 未验证 | |
+| **AC05** | 流式期间用户滚动锚定、文本选区保留与宽度自适应 | 🟢 已验证 | ChatPage 实现智能判断，离开底部时出现“回到最新”悬浮胶囊，阅读区设为 760px |
 | **AC06** | 网络异常与重连时不重发 mutation，状态权威查询 | ⚪ 未验证 | |
 | **AC07** | 计划模式接受/拒绝、中断与恢复语义区分 | ⚪ 未验证 | |
 | **AC08** | pending 审批双入口防重入与多端状态同步 | ⚪ 未验证 | |
@@ -81,4 +81,9 @@
 ## 5. Git 提交记录
 
 *随阶段测试通过实时记录：*
-- 基线测试与类型检查确认：43 文件 240 测试 passed (`npm test -- --run && npm run typecheck`)
+- `544238c`: `docs: 建立 Codex UI 重构执行方案与追踪矩阵 (P0/P1)`
+- `25b4012`: `feat(ui): 引入 CSS 语义 Tokens 体系并支持深浅色与高对比度 (P2)`
+- `1258ca7`: `refactor(desktop): 重构 App.tsx 骨架与原生窗口工具栏及侧边栏折叠支持 (P2)`
+- `f3aca12`: `feat(chat): 优化 Composer 中文输入法保护、代码块纯净复制与回到最新锚定 (P3)`
+- `6102857`: `test(chat): 增加代码块复制栏与 Composer 输入法无障碍测试 (P3)`
+- 阶段验证结果：44 测试文件 243 用例全绿，类型检查 0 errors。
