@@ -4,8 +4,6 @@ import {
   Activity,
   AlertCircle,
   Archive,
-  ArrowLeft,
-  ArrowRight,
   AtSign,
   Bell,
   BookOpen,
@@ -28,8 +26,6 @@ import {
   MessageSquare,
   Monitor,
   MoreHorizontal,
-  PanelLeftClose,
-  PanelLeftOpen,
   Pause,
   Pencil,
   Pin,
@@ -43,10 +39,81 @@ import {
   User,
   Workflow,
   X,
-  type LucideIcon,
   type LucideProps,
 } from 'lucide-react'
-import type { ReactElement } from 'react'
+import type { ComponentType, ReactElement, SVGProps } from 'react'
+
+/** Codex 风格极简高精度后退箭头 (←) */
+const CodexArrowLeft: ComponentType<SVGProps<SVGSVGElement> & { size?: number }> = ({
+  size = 16,
+  strokeWidth = 1.3,
+  color = 'currentColor',
+  ...props
+}) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 16 16"
+    fill="none"
+    stroke={color}
+    strokeWidth={strokeWidth}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+    {...props}
+  >
+    <path d="M13.5 8H2.5" />
+    <path d="M7 4L3 8L7 12" />
+  </svg>
+)
+
+/** Codex 风格极简高前进箭头 (→) */
+const CodexArrowRight: ComponentType<SVGProps<SVGSVGElement> & { size?: number }> = ({
+  size = 16,
+  strokeWidth = 1.3,
+  color = 'currentColor',
+  ...props
+}) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 16 16"
+    fill="none"
+    stroke={color}
+    strokeWidth={strokeWidth}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+    {...props}
+  >
+    <path d="M2.5 8H13.5" />
+    <path d="M9 4L13 8L9 12" />
+  </svg>
+)
+
+/** Codex 风格优雅圆润分栏侧边栏图标 (sidebar) */
+const CodexSidebar: ComponentType<SVGProps<SVGSVGElement> & { size?: number }> = ({
+  size = 16,
+  strokeWidth = 1.25,
+  color = 'currentColor',
+  ...props
+}) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 16 16"
+    fill="none"
+    stroke={color}
+    strokeWidth={strokeWidth}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+    {...props}
+  >
+    <rect x="1.5" y="2.5" width="13" height="11" rx="2.5" />
+    <path d="M5.5 2.5V13.5" />
+  </svg>
+)
 
 export type IconName =
   | 'chat'
@@ -68,6 +135,7 @@ export type IconName =
   | 'activity'
   | 'panelClose'
   | 'panelOpen'
+  | 'sidebar'
   | 'file'
   | 'close'
   | 'pause'
@@ -91,7 +159,7 @@ export type IconName =
   | 'user'
   | 'circle'
 
-const ICONS: Record<IconName, LucideIcon> = {
+const ICONS: Record<IconName, ComponentType<any>> = {
   chat: MessageSquare,
   runs: ListChecks,
   automations: Workflow,
@@ -109,8 +177,9 @@ const ICONS: Record<IconName, LucideIcon> = {
   check: Check,
   alert: AlertCircle,
   activity: Activity,
-  panelClose: PanelLeftClose,
-  panelOpen: PanelLeftOpen,
+  panelClose: CodexSidebar,
+  panelOpen: CodexSidebar,
+  sidebar: CodexSidebar,
   file: FileText,
   close: X,
   pause: Pause,
@@ -123,8 +192,8 @@ const ICONS: Record<IconName, LucideIcon> = {
   search: Search,
   folder: Folder,
   folderOpen: FolderOpen,
-  arrowLeft: ArrowLeft,
-  arrowRight: ArrowRight,
+  arrowLeft: CodexArrowLeft,
+  arrowRight: CodexArrowRight,
   refresh: RotateCw,
   clock: Clock,
   book: BookOpen,
@@ -140,9 +209,15 @@ export interface IconProps extends Omit<LucideProps, 'name'> {
   size?: number
 }
 
-export function Icon({ name, size = 16, ...rest }: IconProps): ReactElement {
+export function Icon({ name, size = 16, strokeWidth, ...rest }: IconProps): ReactElement {
   const Component = ICONS[name]
-  return <Component size={size} strokeWidth={1.8} aria-hidden="true" {...rest} />
+  const defaultStrokeWidth =
+    name === 'panelClose' || name === 'panelOpen' || name === 'sidebar'
+      ? 1.25
+      : name === 'arrowLeft' || name === 'arrowRight'
+        ? 1.3
+        : 1.8
+  return <Component size={size} strokeWidth={strokeWidth ?? defaultStrokeWidth} aria-hidden="true" {...rest} />
 }
 
 export const ActivityClockIcon = Clock3

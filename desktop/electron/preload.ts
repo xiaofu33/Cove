@@ -28,6 +28,22 @@ const desktopApi = {
   setApprovalSize: (height: number): void => {
     ipcRenderer.send('vesta:approval-set-size', height)
   },
+  closeWindow: (): void => {
+    ipcRenderer.send('vesta:window-close')
+  },
+  minimizeWindow: (): void => {
+    ipcRenderer.send('vesta:window-minimize')
+  },
+  maximizeWindow: (): void => {
+    ipcRenderer.send('vesta:window-maximize')
+  },
+  onFocusChange: (callback: (focused: boolean) => void): (() => void) => {
+    const handler = (_event: unknown, focused: boolean) => callback(focused)
+    ipcRenderer.on('vesta:window-focus-changed', handler)
+    return () => {
+      ipcRenderer.removeListener('vesta:window-focus-changed', handler)
+    }
+  },
 } as const
 
 contextBridge.exposeInMainWorld('vesta', desktopApi)

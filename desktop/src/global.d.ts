@@ -17,6 +17,11 @@ interface VestaDesktopApi {
   setApprovalVisible: (visible: boolean) => void
   /** 独立浮动审批小窗的内容高度（Main 据此 resize 窗口）。 */
   setApprovalSize: (height: number) => void
+  /** 窗口控制 (关闭/最小化/最大化/焦点监听) */
+  closeWindow?: () => void
+  minimizeWindow?: () => void
+  maximizeWindow?: () => void
+  onFocusChange?: (callback: (focused: boolean) => void) => () => void
 }
 
 interface Window {

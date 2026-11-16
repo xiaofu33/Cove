@@ -5974,26 +5974,102 @@ body,
 .window-toolbar__left {
   display: flex !important;
   align-items: center !important;
+  gap: 0 !important;
   -webkit-app-region: no-drag !important;
 }
 
+/* Codex 风格 14px 原生饱满高精度红绿灯 */
+.traffic-lights {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  padding-left: 16px !important;
+  margin-right: 13px !important;
+  -webkit-app-region: no-drag !important;
+  user-select: none !important;
+}
+
+.traffic-lights__btn {
+  width: 14px !important;
+  height: 14px !important;
+  min-width: 14px !important;
+  min-height: 14px !important;
+  border-radius: 50% !important;
+  border: 0.5px solid rgba(0, 0, 0, 0.15) !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  position: relative !important;
+  box-sizing: border-box !important;
+  outline: none !important;
+  transition: filter 80ms ease, opacity 80ms ease, background-color 150ms ease !important;
+}
+
+.traffic-lights__btn:active {
+  filter: brightness(0.85) !important;
+}
+
+/* 激活态调色盘 (macOS 原生 Big Sur+ 标准色) */
+.traffic-lights--focused .traffic-lights__btn--close {
+  background-color: #ff5f56 !important;
+  border-color: rgba(224, 68, 62, 0.4) !important;
+}
+.traffic-lights--focused .traffic-lights__btn--minimize {
+  background-color: #ffbd2e !important;
+  border-color: rgba(222, 161, 35, 0.4) !important;
+}
+.traffic-lights--focused .traffic-lights__btn--maximize {
+  background-color: #27c93f !important;
+  border-color: rgba(26, 171, 46, 0.4) !important;
+}
+
+/* 失焦态（灰色，完全对齐 Codex 截图） */
+.traffic-lights--blurred .traffic-lights__btn {
+  background-color: #d1d5db !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+[data-theme='dark'] .traffic-lights--blurred .traffic-lights__btn,
+.dark .traffic-lights--blurred .traffic-lights__btn {
+  background-color: #4b5563 !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* 符号：平时完全隐藏，鼠标移入红绿灯区域整体浮现 */
+.traffic-lights__symbol {
+  width: 14px !important;
+  height: 14px !important;
+  color: rgba(0, 0, 0, 0.55) !important;
+  opacity: 0 !important;
+  transition: opacity 80ms ease !important;
+  pointer-events: none !important;
+}
+
+.traffic-lights:hover .traffic-lights__symbol {
+  opacity: 1 !important;
+}
+
 .window-toolbar__traffic-lights {
-  width: 84px !important;
+  width: 86px !important;
   flex-shrink: 0 !important;
 }
 
 .window-toolbar__nav-buttons {
   display: flex !important;
   align-items: center !important;
-  gap: 3px !important;
+  gap: 6px !important;
 }
 
 .window-toolbar__btn {
-  width: 26px !important;
-  height: 26px !important;
+  width: 28px !important;
+  height: 28px !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
+  padding: 0 !important;
   border: none !important;
   border-radius: 6px !important;
   background: transparent !important;
@@ -6003,13 +6079,29 @@ body,
 }
 
 .window-toolbar__btn:hover:not(:disabled) {
-  background: rgba(0, 0, 0, 0.05) !important;
+  background: rgba(0, 0, 0, 0.06) !important;
   color: #0f172a !important;
 }
 
+.window-toolbar__btn:active:not(:disabled) {
+  background: rgba(0, 0, 0, 0.1) !important;
+}
+
 .window-toolbar__btn:disabled {
-  opacity: 0.3 !important;
+  opacity: 0.35 !important;
   cursor: default !important;
+  pointer-events: none !important;
+}
+
+[data-theme='dark'] .window-toolbar__btn,
+.dark .window-toolbar__btn {
+  color: #94a3b8 !important;
+}
+
+[data-theme='dark'] .window-toolbar__btn:hover:not(:disabled),
+.dark .window-toolbar__btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #f1f5f9 !important;
 }
 
 .window-toolbar__center {

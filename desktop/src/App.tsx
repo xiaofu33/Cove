@@ -20,6 +20,7 @@ import RunsPage from './pages/RunsPage'
 import SettingsPage from './pages/SettingsPage'
 import { Icon } from './components/Icon'
 import type { IconName } from './components/Icon'
+import { TrafficLights } from './components/TrafficLights'
 
 export type PageKey =
   | 'chat'
@@ -212,8 +213,8 @@ export default function App(): React.JSX.Element {
       {/* 贯穿全窗顶部的 macOS 原生风格状态/导航栏 */}
       <header className="window-toolbar" role="banner" aria-label="应用工具栏">
         <div className="window-toolbar__left">
-          {/* macOS 红绿灯预留避让空间 (darwin 80px) */}
-          <div className="window-toolbar__traffic-lights" aria-hidden="true" />
+          {/* Codex 风格 14px 原生饱满高保真红绿灯 */}
+          <TrafficLights />
 
           <div className="window-toolbar__nav-buttons">
             <button
@@ -224,7 +225,7 @@ export default function App(): React.JSX.Element {
               title="后退 (⌘[)"
               aria-label="后退"
             >
-              <Icon name="arrowLeft" size={14} />
+              <Icon name="arrowLeft" size={15} />
             </button>
             <button
               type="button"
@@ -234,7 +235,7 @@ export default function App(): React.JSX.Element {
               title="前进 (⌘])"
               aria-label="前进"
             >
-              <Icon name="arrowRight" size={14} />
+              <Icon name="arrowRight" size={15} />
             </button>
             <button
               type="button"
@@ -243,7 +244,7 @@ export default function App(): React.JSX.Element {
               title={sidebarCollapsed ? '展开侧边栏 (⌘B)' : '收起侧边栏 (⌘B)'}
               aria-label={sidebarCollapsed ? '展开侧边栏' : '收起侧边栏'}
             >
-              <Icon name={sidebarCollapsed ? 'panelOpen' : 'panelClose'} size={14} />
+              <Icon name={sidebarCollapsed ? 'panelOpen' : 'panelClose'} size={15} />
             </button>
           </div>
         </div>

@@ -135,11 +135,10 @@ function createWindow(): void {
     ...(process.platform === 'darwin'
       ? {
           titleBarStyle: 'hiddenInset' as const,
-          trafficLightPosition: { x: 19, y: 17 },
-          transparent: true,
-          vibrancy: 'under-window' as const,
+          trafficLightPosition: { x: -100, y: -100 },
+          acceptFirstMouse: true,
+          vibrancy: 'menu' as const,
           visualEffectState: 'active' as const,
-          backgroundColor: '#00000000',
         }
       : {}),
     webPreferences: {
@@ -167,6 +166,14 @@ function createWindow(): void {
     return { action: 'deny' }
   })
 
+  // 窗口焦点变化通知渲染层（驱动高精度红绿灯失焦/聚焦状态切换）
+  win.on('focus', () => {
+    if (!win.isDestroyed()) win.webContents.send('vesta:window-focus-changed', true)
+  })
+  win.on('blur', () => {
+    if (!win.isDestroyed()) win.webContents.send('vesta:window-focus-changed', false)
+  })
+
   // macOS 关闭窗口只隐藏，Renderer / WebSocket 保持活跃；显式 Quit 才退出。
   win.on('close', (event) => {
     if (process.platform === 'darwin' && !isQuitting) {
@@ -178,6 +185,31 @@ function createWindow(): void {
     if (mainWindow === win) mainWindow = null
   })
 }
+
+// 统一原生窗口控制 IPC (供 14px 高保真红绿灯组件调用)
+ipcMain.on('vesta:window-close', () => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.close()
+  }
+})
+
+ipcMain.on('vesta:window-minimize', () => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.minimize()
+  }
+})
+
+ipcMain.on('vesta:window-maximize', () => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    if (mainWindow.isFullScreen()) {
+      mainWindow.setFullScreen(false)
+    } else if (mainWindow.isMaximized()) {
+      mainWindow.unmaximize()
+    } else {
+      mainWindow.maximize()
+    }
+  }
+})
 
 function isHttpUrl(value: string): boolean {
   try {
