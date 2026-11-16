@@ -74,4 +74,15 @@ describe('AssistantContent', () => {
     expect(html).toContain('const a = 1')
     expect(html).not.toContain('shiki')
   })
+
+  it('代码块提供语言标识栏与复制代码按钮', () => {
+    const html = renderToStaticMarkup(
+      <AssistantContent content={'```ts\nconst a = 1\n```'} />,
+    )
+    expect(html).toContain('code-block-wrapper')
+    expect(html).toContain('code-block-header')
+    expect(html).toContain('code-block-lang">ts</span>')
+    expect(html).toContain('code-block-copy-btn')
+    expect(html).toContain('复制代码')
+  })
 })

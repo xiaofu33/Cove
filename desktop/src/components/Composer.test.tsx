@@ -71,4 +71,12 @@ describe('Composer', () => {
     expect(html).not.toContain('⌘K')
     expect(html).not.toContain('composer-commands__item')
   })
+
+  it('消息输入框具备无障碍名称与自适应行配置', () => {
+    const html = renderToStaticMarkup(
+      <Composer disabled={false} onSend={async () => {}} />,
+    )
+    expect(html).toContain('aria-label="消息输入框"')
+    expect(html).toContain('rows="1"')
+  })
 })
