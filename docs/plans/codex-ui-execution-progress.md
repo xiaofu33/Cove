@@ -29,8 +29,8 @@
 | **P1** | 视觉与交互规范设计、Codex 参考与 HIG 评审 | designer | 🟢 已完成 | `design-spec.md`, `codex-reference.md`, `design-review.md` (全优评级) |
 | **P2** | 语义 Tokens 落地、工作区三栏骨架与路由保持 | builder | 🟢 已完成 | 落地 `tokens.css` (浅/深/高对比度)，重构 `App.tsx` 原生窗口工具栏与侧栏折叠，新增 `App.test.tsx` (241 测试通过) |
 | **P3** | 对话核心体验 (ChatPage, Composer, 消息与推理折叠) | builder | 🟢 已完成 | Composer 中文 IME 保护/高度自适应/快捷键，AssistantContent 代码高亮与纯净复制，ChatPage 滚动锚定与“回到最新”悬浮指示器 (243 测试通过) |
-| **P4** | 任务执行、运行控制与成果展示 | builder | ⚪ 待开始 | 任务摘要、LiveAgentTurn/Trace 优化、cancel/interrupt/recover、Artifact 交互 |
-| **P5** | 审批系统与 Computer Runtime 链路 | builder | ⚪ 待开始 | 审批卡片/待办、后台非抢占浮窗与主界面状态同步 |
+| **P4** | 任务执行、运行控制与成果展示 | builder | 🟢 已完成 | 重构 CurrentTaskPanel 紧凑步骤树与状态符号，重构 PlanCard 独立确认蓝图；重构 ExecutionTrace 渐进披露（SF Mono 代码与 JSON 复制）；重构 ResultCard 成果卡片标准化 (245 测试通过) |
+| **P5** | 审批系统与 Computer Runtime 链路 | builder | 🟡 准备中 | 审批卡片/待办、后台非抢占浮窗与主界面状态同步 |
 | **P6** | 管理功能统一 (Runs, Automations, Memory, Settings) | builder | ⚪ 待开始 | 页面风格统一样式与状态反馈对齐 |
 | **P7** | macOS 原生系统体验、深浅外观、可访问性与性能 | builder | ⚪ 待开始 | 主题自适应、键盘可达性、字体缩放与高负载测试 |
 | **P8** | 交付验证、文档更新与构建验收 | builder | ⚪ 待开始 | 打包验证、README 与最终交付物归档 |
@@ -63,7 +63,7 @@
 | **AC04** | 运行时切会话不串流，后台持续更新 | ⚪ 未验证 | |
 | **AC05** | 流式期间用户滚动锚定、文本选区保留与宽度自适应 | 🟢 已验证 | ChatPage 实现智能判断，离开底部时出现“回到最新”悬浮胶囊，阅读区设为 760px |
 | **AC06** | 网络异常与重连时不重发 mutation，状态权威查询 | ⚪ 未验证 | |
-| **AC07** | 计划模式接受/拒绝、中断与恢复语义区分 | ⚪ 未验证 | |
+| **AC07** | 计划模式接受/拒绝、中断与恢复语义区分 | 🟢 已验证 | PlanCard 独立确认蓝图与 CurrentTaskPanel 状态符号表征，单测通过 |
 | **AC08** | pending 审批双入口防重入与多端状态同步 | ⚪ 未验证 | |
 | **AC09** | 跨应用审批浮窗不夺取系统目标焦点 | ⚪ 未验证 | |
 | **AC10** | 主窗口关闭后审批浮窗仍正常唤起，Dock 可重新恢复主窗口 | ⚪ 未验证 | |
@@ -86,4 +86,7 @@
 - `1258ca7`: `refactor(desktop): 重构 App.tsx 骨架与原生窗口工具栏及侧边栏折叠支持 (P2)`
 - `f3aca12`: `feat(chat): 优化 Composer 中文输入法保护、代码块纯净复制与回到最新锚定 (P3)`
 - `6102857`: `test(chat): 增加代码块复制栏与 Composer 输入法无障碍测试 (P3)`
-- 阶段验证结果：44 测试文件 243 用例全绿，类型检查 0 errors。
+- `4aa4eb6`: `refactor(task): 重构 CurrentTaskPanel 与 PlanCard 步骤树及样式规范 (P4)`
+- `a7f9154`: `refactor(trace): 落实 ExecutionTrace 渐进式披露与 ResultCard 交付规范 (P4)`
+- `9c0af82`: `test(p4): 增加 PlanCard 步骤总数与 ResultCard 无障碍测试 (P4)`
+- 阶段验证结果：44 测试文件 245 用例全绿，类型检查 0 errors。
