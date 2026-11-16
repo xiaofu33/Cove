@@ -5,21 +5,22 @@ import type { PageKey } from '../App'
 import { Icon } from './Icon'
 import type { IconName } from './Icon'
 import { StatusDot } from './ui'
+import { Tooltip } from './Tooltip'
 
 export interface SidebarItem {
   key: PageKey
   label: string
   icon: IconName
+  shortcut?: string
 }
 
 export const SIDEBAR_ITEMS: SidebarItem[] = [
-  { key: 'chat', label: '工作区', icon: 'chat' },
-  { key: 'runs', label: '执行历史', icon: 'clock' },
-  { key: 'memory', label: '长期记忆', icon: 'book' },
-  { key: 'approvals', label: '审批', icon: 'approvals' },
-  { key: 'automations', label: '自动化', icon: 'automations' },
-  { key: 'artifacts', label: '交付物', icon: 'artifacts' },
-  { key: 'computer', label: '电脑', icon: 'computer' },
+  { key: 'runs', label: '执行历史', icon: 'clock', shortcut: '⌘2' },
+  { key: 'memory', label: '长期记忆', icon: 'book', shortcut: '⌘3' },
+  { key: 'approvals', label: '审批', icon: 'approvals', shortcut: '⌘4' },
+  { key: 'automations', label: '自动化', icon: 'automations', shortcut: '⌘5' },
+  { key: 'artifacts', label: '交付物', icon: 'artifacts', shortcut: '⌘6' },
+  { key: 'computer', label: '电脑', icon: 'computer', shortcut: '⌘7' },
 ]
 
 export interface SidebarProps {
@@ -44,67 +45,98 @@ export default function Sidebar({
     return typeof value === 'number' && value > 0 ? value : null
   }
 
-  return (
-    <nav className="sidebar sidebar--mini" aria-label="主导航">
-      {/* 顶部微型品牌标记 */}
-      <div className="sidebar-brand" aria-label="Vesta" title="Vesta">
-        <span className="sidebar-brand__logo" aria-hidden="true">V</span>
-      </div>
+  // 主页即是聊天工作区
+  const isChatActive = current === 'chat'
 
-      {/* 主导航图标列表 */}
-      <div className="sidebar-nav">
-        {SIDEBAR_ITEMS.map((item) => (
+  return (
+    <nav className="sidebar sidebar--mini" aria-label="Vesta 主导航">
+      {/* 顶部主页 (即聊天工作区)：未选中为正常图标，选中后内部染黑 */}
+      <div className="sidebar-brand-wrap">
+        <Tooltip content="工作区" shortcut="⌘1" side="right">
           <button
-            key={item.key}
             type="button"
-            className={`nav-item ${current === item.key ? 'active' : ''}`}
-            onClick={() => onNavigate(item.key)}
-            aria-current={current === item.key ? 'page' : undefined}
-            aria-label={item.label}
-            title={item.label}
+            className={`nav-item nav-item--home ${isChatActive ? 'active' : ''}`}
+            onClick={() => onNavigate('chat')}
+            aria-current={isChatActive ? 'page' : undefined}
+            aria-label="工作区"
+            title="工作区"
           >
             <span className="nav-item__icon-wrap">
-              <Icon name={item.icon} size={18} />
-              {badgeFor(item.key) !== null ? (
-                <span className="nav-badge" aria-label={`${badgeFor(item.key)}`}>
-                  {badgeFor(item.key)! > 99 ? '99+' : badgeFor(item.key)}
+              <Icon name="home" size={20} filled={isChatActive} />
+              {badgeFor('chat') !== null ? (
+                <span className="nav-badge" aria-label={`${badgeFor('chat')}`}>
+                  {badgeFor('chat')! > 99 ? '99+' : badgeFor('chat')}
                 </span>
-              ) : dots?.[item.key] ? (
+              ) : dots?.chat ? (
                 <span className="nav-badge nav-badge--dot" aria-hidden="true" />
               ) : null}
             </span>
-            <span className="nav-item__label">{item.label}</span>
           </button>
-        ))}
+        </Tooltip>
+      </div>
+
+      {/* 主导航图标列表：未选中正常图标，选中后内部染黑 */}
+      <div className="sidebar-nav">
+        {SIDEBAR_ITEMS.map((item) => {
+          const isItemActive = current === item.key
+          return (
+            <Tooltip key={item.key} content={item.label} shortcut={item.shortcut} side="right">
+              <button
+                type="button"
+                className={`nav-item ${isItemActive ? 'active' : ''}`}
+                onClick={() => onNavigate(item.key)}
+                aria-current={isItemActive ? 'page' : undefined}
+                aria-label={item.label}
+                title={item.label}
+              >
+                <span className="nav-item__icon-wrap">
+                  <Icon name={item.icon} size={20} filled={isItemActive} />
+                  {badgeFor(item.key) !== null ? (
+                    <span className="nav-badge" aria-label={`${badgeFor(item.key)}`}>
+                      {badgeFor(item.key)! > 99 ? '99+' : badgeFor(item.key)}
+                    </span>
+                  ) : dots?.[item.key] ? (
+                    <span className="nav-badge nav-badge--dot" aria-hidden="true" />
+                  ) : null}
+                </span>
+              </button>
+            </Tooltip>
+          )
+        })}
       </div>
 
       {/* 底部设置、Host 状态与个人头像 */}
       <div className="sidebar-footer">
-        <button
-          type="button"
-          className={`nav-item ${current === 'settings' ? 'active' : ''}`}
-          onClick={() => onNavigate('settings')}
-          aria-current={current === 'settings' ? 'page' : undefined}
-          title="设置"
-          aria-label="设置"
-        >
-          <span className="nav-item__icon-wrap">
-            <Icon name="settings" size={18} />
-          </span>
-          <span className="nav-item__label">设置</span>
-        </button>
+        <Tooltip content="偏好设置" shortcut="⌘," side="right">
+          <button
+            type="button"
+            className={`nav-item ${current === 'settings' ? 'active' : ''}`}
+            onClick={() => onNavigate('settings')}
+            aria-current={current === 'settings' ? 'page' : undefined}
+            aria-label="设置"
+            title="设置"
+          >
+            <span className="nav-item__icon-wrap">
+              <Icon name="settings" size={20} filled={current === 'settings'} />
+            </span>
+          </button>
+        </Tooltip>
 
-        <div
-          className="host-status"
-          title={connected ? 'Host 已连接' : 'Host 已离线'}
-          aria-label={connected ? 'Host 就绪' : 'Host 离线'}
-        >
-          <StatusDot tone={connected ? 'ready' : 'offline'} />
-        </div>
+        <Tooltip content={connected ? 'Host 服务已连接' : 'Host 服务已离线'} side="right">
+          <div
+            className="host-status"
+            title={connected ? 'Host 已连接' : 'Host 已离线'}
+            aria-label={connected ? 'Host 就绪' : 'Host 离线'}
+          >
+            <StatusDot tone={connected ? 'ready' : 'offline'} />
+          </div>
+        </Tooltip>
 
-        <div className="sidebar-avatar" title="当前工作区 (Vesta)">
-          <span className="sidebar-avatar__inner">U</span>
-        </div>
+        <Tooltip content="个人工作区 (Vesta)" side="right">
+          <div className="sidebar-avatar" title="当前工作区 (Vesta)" aria-label="当前工作区 (Vesta)">
+            <span className="sidebar-avatar__inner">U</span>
+          </div>
+        </Tooltip>
       </div>
     </nav>
   )

@@ -91,7 +91,7 @@ summary:focus-visible {
   justify-content: space-between;
   padding: 0 16px 0 12px;
   background: var(--surface-window);
-  border-bottom: 1px solid var(--border-separator);
+  border-bottom: none;
   -webkit-app-region: drag;
   user-select: none;
   z-index: 20;
@@ -249,7 +249,7 @@ summary:focus-visible {
 .sidebar-footer {
   margin-top: auto;
   padding-top: 10px;
-  border-top: 1px solid var(--border-subtle);
+  border-top: none;
 }
 
 .nav-item {
@@ -5941,22 +5941,45 @@ body,
   background: transparent !important;
 }
 
+/* 辅助功能：标准屏幕阅读器隐藏类 */
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
 .app-shell {
   display: flex !important;
   flex-direction: column !important;
   width: 100vw !important;
   height: 100vh !important;
-  background: transparent !important;
+  background: rgba(246, 246, 248, 0.28) !important;
+  backdrop-filter: blur(22px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(190%) !important;
   overflow: hidden !important;
   /* 苹果官方连续曲率超椭圆 (Squircle) */
   border-radius: 11px !important;
   -webkit-corner-smoothing: 100% !important;
   -electron-corner-smoothing: 100% !important;
   /* 1px 视网膜双层精致描边，消除剪纸感 */
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1) !important;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08) !important;
 }
 
-/* 顶部状态栏：轻量标准毛玻璃 (Frosted Titlebar) */
+[data-theme='dark'] .app-shell,
+.dark .app-shell {
+  background: rgba(20, 20, 24, 0.35) !important;
+  backdrop-filter: blur(22px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(190%) !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
+}
+
+/* 顶部状态栏：与侧栏融为一体化底板，无任何横切线条 */
 .window-toolbar {
   height: 44px !important;
   min-height: 44px !important;
@@ -5964,8 +5987,8 @@ body,
   align-items: center !important;
   justify-content: space-between !important;
   padding: 0 14px 0 0 !important;
-  background: rgba(255, 255, 255, 0.45) !important;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+  background: transparent !important;
+  border: none !important;
   -webkit-app-region: drag !important;
   user-select: none !important;
   z-index: 100 !important;
@@ -6200,59 +6223,52 @@ body,
   background: transparent !important;
 }
 
-/* 第一列：轻量级毛玻璃活动栏 (Frosted Mini Activity Bar) */
+/* 第一列：与底板一体的极窄活动栏 (Mini Activity Bar)，无竖线隔断 */
 .sidebar.sidebar--mini {
-  width: 48px !important;
-  min-width: 48px !important;
-  flex: 0 0 48px !important;
-  background: rgba(246, 246, 248, 0.35) !important;
-  border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
+  width: 56px !important;
+  min-width: 56px !important;
+  flex: 0 0 56px !important;
+  background: transparent !important;
+  border-right: none !important;
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
-  padding: 10px 0 12px !important;
+  padding: 4px 0 12px !important;
   gap: 0 !important;
   z-index: 20 !important;
 }
 
-.sidebar-brand {
-  width: 28px !important;
-  height: 28px !important;
-  border-radius: 7px !important;
-  background: #0f172a !important;
-  color: #ffffff !important;
+/* 顶部 Codex 风格 Home (工作区入口)：统一使用 nav-item 体系 */
+.sidebar-brand-wrap {
+  width: 100% !important;
   display: flex !important;
-  align-items: center !important;
   justify-content: center !important;
-  font-size: 13px !important;
-  font-weight: 700 !important;
-  margin: 0 0 12px !important;
-  border: none !important;
-  box-shadow: none !important;
+  margin-bottom: 8px !important;
 }
 
 .sidebar-nav {
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
-  gap: 6px !important;
+  gap: 8px !important;
   width: 100% !important;
 }
 
+/* 大号 38px 导航按钮 (Icon 提升至 20px) */
 .sidebar .nav-item {
-  width: 34px !important;
-  height: 34px !important;
+  width: 38px !important;
+  height: 38px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   border-radius: 8px !important;
   background: transparent !important;
-  color: #64748b !important;
+  color: #475569 !important;
   border: none !important;
   cursor: pointer !important;
   padding: 0 !important;
   position: relative !important;
-  transition: all 120ms ease !important;
+  transition: background 150ms cubic-bezier(0.23, 1, 0.32, 1), color 150ms cubic-bezier(0.23, 1, 0.32, 1), transform 120ms ease !important;
 }
 
 .sidebar .nav-item:hover {
@@ -6260,9 +6276,22 @@ body,
   color: #0f172a !important;
 }
 
+.sidebar .nav-item:active {
+  transform: scale(0.96) !important;
+}
+
+/* 激活态：图标内部染黑，选择框保持安静通透的浅灰微胶囊底，绝不整个选择框染黑 */
 .sidebar .nav-item.active {
-  background: #0f172a !important;
-  color: #ffffff !important;
+  background: rgba(0, 0, 0, 0.07) !important;
+  color: #0f172a !important;
+  box-shadow: none !important;
+}
+
+[data-theme='dark'] .sidebar .nav-item.active,
+.dark .sidebar .nav-item.active {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #f8fafc !important;
+  box-shadow: none !important;
 }
 
 .nav-item__icon-wrap {
@@ -6296,31 +6325,127 @@ body,
   right: -3px !important;
 }
 
+/* 底部操作区：去除切断侧栏的底横线 */
 .sidebar-footer {
   margin-top: auto !important;
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
-  gap: 6px !important;
+  gap: 10px !important;
   width: 100% !important;
-  padding-top: 8px !important;
-  border-top: 1px solid rgba(0, 0, 0, 0.05) !important;
+  padding-top: 10px !important;
+  border-top: none !important;
+}
+
+.host-status {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: default !important;
 }
 
 .sidebar-avatar {
-  width: 26px !important;
-  height: 26px !important;
+  width: 28px !important;
+  height: 28px !important;
   border-radius: 50% !important;
   background: #e2e8f0 !important;
   color: #475569 !important;
-  font-size: 11px !important;
+  font-size: 12px !important;
   font-weight: 600 !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  margin-top: 4px !important;
+  margin-top: 2px !important;
   cursor: pointer !important;
   border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  transition: transform 120ms ease !important;
+}
+
+.sidebar-avatar:hover {
+  transform: scale(1.05) !important;
+}
+
+/* 高保真 Codex 动效 Tooltip */
+.tooltip-wrapper {
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.codex-tooltip {
+  position: absolute !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  white-space: nowrap !important;
+  z-index: 1000 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 4px 8px !important;
+  border-radius: 6px !important;
+  background: rgba(15, 23, 42, 0.95) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  color: #ffffff !important;
+  font-size: 11.5px !important;
+  font-weight: 500 !important;
+  line-height: 1 !important;
+  transition: opacity 150ms cubic-bezier(0.23, 1, 0.32, 1), transform 150ms cubic-bezier(0.23, 1, 0.32, 1) !important;
+}
+
+/* 右侧弹出 (默认用于 Mini Activity Bar) */
+.codex-tooltip--right {
+  left: calc(100% + 10px) !important;
+  top: 50% !important;
+  transform: translateY(-50%) translateX(-4px) scale(0.96) !important;
+  transform-origin: left center !important;
+}
+
+.codex-tooltip--right.codex-tooltip--visible {
+  opacity: 1 !important;
+  transform: translateY(-50%) translateX(0) scale(1) !important;
+}
+
+/* 下方弹出 (用于顶部 Header 图标按钮) */
+.codex-tooltip--bottom {
+  left: 50% !important;
+  top: calc(100% + 8px) !important;
+  transform: translateX(-50%) translateY(-4px) scale(0.96) !important;
+  transform-origin: center top !important;
+}
+
+.codex-tooltip--bottom.codex-tooltip--visible {
+  opacity: 1 !important;
+  transform: translateX(-50%) translateY(0) scale(1) !important;
+}
+
+/* 上方弹出 */
+.codex-tooltip--top {
+  left: 50% !important;
+  bottom: calc(100% + 8px) !important;
+  top: auto !important;
+  transform: translateX(-50%) translateY(4px) scale(0.96) !important;
+  transform-origin: center bottom !important;
+}
+
+.codex-tooltip--top.codex-tooltip--visible {
+  opacity: 1 !important;
+  transform: translateX(-50%) translateY(0) scale(1) !important;
+}
+
+.codex-tooltip__shortcut {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace !important;
+  font-size: 10px !important;
+  color: rgba(255, 255, 255, 0.5) !important;
+  padding: 1px 3px !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-radius: 3px !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.12) !important;
+  line-height: 1 !important;
 }
 
 .chat-workspace {
@@ -6330,18 +6455,23 @@ body,
   background: transparent !important;
 }
 
-/* 第二列：轻量级毛玻璃侧边栏面板 (Frosted Sidebar Panel)，支持自由拖拽缩放 */
+/* 第二列：会话树侧栏 (对话历史)，位于顶层圆角白窗口内左侧，带轻微 1px 细线分隔 */
 .conversation-sidebar {
   width: 248px;
   min-width: 180px;
   flex: 0 0 auto;
   position: relative !important;
-  background: rgba(250, 250, 252, 0.4) !important;
-  border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
+  background: transparent !important;
+  border-right: 1px solid rgba(0, 0, 0, 0.06) !important;
   display: flex !important;
   flex-direction: column !important;
   overflow: hidden !important;
   transition: width 180ms cubic-bezier(0.4, 0, 0.2, 1), flex-basis 180ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+[data-theme='dark'] .conversation-sidebar,
+.dark .conversation-sidebar {
+  border-right-color: rgba(255, 255, 255, 0.06) !important;
 }
 
 .conversation-sidebar__resizer {
@@ -6361,23 +6491,48 @@ body,
   background: rgba(59, 130, 246, 0.35) !important;
 }
 
-/* 主内容容器保持透明，避免覆盖侧边栏的毛玻璃透光 */
+/* 核心：整个工作区 (包含对话历史与主内容) 构成的 Codex 顶层独立圆角卡片窗口 */
 .main {
-  background: transparent !important;
-}
-
-/* 第三列：主内容聊天区，使用不透明白色实底保证文字可读性与高对比度 */
-.chat-right {
   background: #ffffff !important;
+  border-radius: 12px !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03), 0 4px 16px rgba(0, 0, 0, 0.025) !important;
+  margin: 0 8px 8px 0 !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex: 1 !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: calc(100% - 8px) !important;
+  position: relative !important;
 }
 
+[data-theme='dark'] .main,
+.dark .main {
+  background: #202022 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.35) !important;
+}
+
+/* 主内容聊天区与各页面容器：无缝融入 .main 圆角大窗口内部 */
+.chat-right,
 .page-container,
 .settings-page,
 .runs-page,
 .approvals-page,
 .artifacts-page,
 .computer-page {
-  background: #ffffff !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 !important;
+  min-width: 0 !important;
+  height: 100% !important;
 }
 
 .conversation-sidebar.collapsed {
@@ -6434,7 +6589,8 @@ body,
   flex-direction: row !important;
   align-items: center !important;
   justify-content: space-between !important;
-  padding: 10px 12px 6px !important;
+  padding: 8px 12px 6px !important;
+  height: 40px !important;
   position: relative !important;
 }
 
@@ -6498,37 +6654,42 @@ body,
 }
 
 .conversation-sidebar__new-section {
-  padding: 4px 10px 10px !important;
+  padding: 2px 8px 8px !important;
 }
 
+/* Codex 风格纯平无边框通栏新建按钮 */
 .new-conversation {
   width: 100% !important;
-  height: 32px !important;
+  height: 30px !important;
   display: flex !important;
   align-items: center !important;
-  gap: 7px !important;
-  padding: 0 10px !important;
+  gap: 8px !important;
+  padding: 0 8px !important;
   border-radius: 6px !important;
-  border: 1px solid rgba(0, 0, 0, 0.08) !important;
-  background: #ffffff !important;
-  color: #1e293b !important;
-  font-size: 12.5px !important;
-  font-weight: 500 !important;
+  border: none !important;
+  background: transparent !important;
+  color: #334155 !important;
+  font-size: 13px !important;
+  font-weight: 450 !important;
   cursor: pointer !important;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02) !important;
-  transition: all 120ms ease !important;
+  box-shadow: none !important;
+  transition: background 120ms ease, color 120ms ease !important;
 }
 
 .new-conversation:hover {
-  background: #f8fafc !important;
-  border-color: rgba(0, 0, 0, 0.15) !important;
+  background: rgba(0, 0, 0, 0.05) !important;
   color: #0f172a !important;
+}
+
+.new-conversation__icon {
+  color: #64748b !important;
+  flex-shrink: 0 !important;
 }
 
 .conversation-list {
   flex: 1 !important;
   overflow-y: auto !important;
-  padding: 2px 6px 14px !important;
+  padding: 2px 8px 14px !important;
 }
 
 .conversation-group {
@@ -6536,24 +6697,28 @@ body,
 }
 
 .conversation-group__title {
-  padding: 4px 10px 2px !important;
+  padding: 8px 8px 3px !important;
   font-size: 11px !important;
-  font-weight: 600 !important;
+  font-weight: 500 !important;
   color: #94a3b8 !important;
-  letter-spacing: 0.03em !important;
+  letter-spacing: 0.02em !important;
+  user-select: none !important;
 }
 
+/* 单行极简会话条目 */
 .conversation-item {
   position: relative !important;
   margin: 1px 0 !important;
   border-radius: 6px !important;
   background: transparent !important;
-  min-height: auto !important;
+  height: 30px !important;
+  display: flex !important;
+  align-items: center !important;
   transition: background 100ms ease !important;
 }
 
 .conversation-item--indent {
-  padding-left: 12px !important;
+  padding-left: 14px !important;
 }
 
 .conversation-item:hover {
@@ -6561,44 +6726,54 @@ body,
 }
 
 .conversation-item.active {
-  background: rgba(0, 0, 0, 0.06) !important;
+  background: rgba(0, 0, 0, 0.065) !important;
+  box-shadow: none !important;
+  border: none !important;
 }
 
 .conversation-item__main {
   width: 100% !important;
+  height: 100% !important;
   text-align: left !important;
-  padding: 6px 8px !important;
+  padding: 0 8px !important;
   background: transparent !important;
   border: none !important;
   cursor: pointer !important;
   display: flex !important;
-  flex-direction: column !important;
-  gap: 2px !important;
+  align-items: center !important;
+  min-width: 0 !important;
 }
 
 .conversation-item__row {
   display: flex !important;
   align-items: center !important;
-  justify-content: space-between !important;
   width: 100% !important;
-  gap: 4px !important;
+  min-width: 0 !important;
+  gap: 6px !important;
 }
 
 .conversation-item__title {
-  font-size: 12.5px !important;
-  font-weight: 450 !important;
+  font-size: 13px !important;
+  font-weight: 400 !important;
   color: #334155 !important;
+  overflow: hidden !important;
+  white-space: nowrap !important;
+  flex: 1 !important;
+  min-width: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+}
+
+.conversation-item__title-text {
   overflow: hidden !important;
   text-overflow: ellipsis !important;
   white-space: nowrap !important;
   flex: 1 !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  gap: 4px !important;
 }
 
 .conversation-item.active .conversation-item__title {
-  font-weight: 600 !important;
+  font-weight: 550 !important;
   color: #0f172a !important;
 }
 
@@ -6612,22 +6787,16 @@ body,
   color: #2563eb !important;
   display: inline-flex !important;
   align-items: center !important;
-}
-
-.conversation-item__meta {
-  display: flex !important;
-  align-items: center !important;
-  gap: 6px !important;
-  font-size: 11px !important;
-  color: #94a3b8 !important;
-  margin-top: 1px !important;
+  flex-shrink: 0 !important;
 }
 
 .conversation-item__status {
   font-size: 10.5px !important;
   font-weight: 500 !important;
-  padding: 0 4px !important;
+  padding: 1px 4px !important;
   border-radius: 4px !important;
+  flex-shrink: 0 !important;
+  line-height: 1.2 !important;
 }
 
 .conversation-item__status--running {
@@ -6650,20 +6819,22 @@ body,
 }
 
 .conversation-item__activity {
-  font-size: 11px !important;
+  font-size: 10.5px !important;
   color: #2563eb !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
   white-space: nowrap !important;
-  margin-top: 2px !important;
+  max-width: 90px !important;
+  flex-shrink: 0 !important;
 }
 
 .conversation-item__more {
   position: absolute !important;
-  right: 6px !important;
-  top: 6px !important;
-  width: 22px !important;
-  height: 22px !important;
+  right: 4px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 20px !important;
+  height: 20px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -6673,12 +6844,14 @@ body,
   color: #94a3b8 !important;
   opacity: 0 !important;
   cursor: pointer !important;
+  pointer-events: none !important;
   transition: opacity 120ms ease, background 120ms ease !important;
 }
 
 .conversation-item:hover .conversation-item__more,
 .conversation-item__more:focus-visible {
   opacity: 1 !important;
+  pointer-events: auto !important;
 }
 
 .conversation-item__more:hover {
@@ -6692,16 +6865,17 @@ body,
 
 .project-node__header {
   width: 100% !important;
+  height: 28px !important;
   display: flex !important;
   align-items: center !important;
   gap: 5px !important;
-  padding: 5px 8px !important;
+  padding: 0 8px !important;
   border-radius: 6px !important;
   border: none !important;
   background: transparent !important;
   color: #334155 !important;
-  font-size: 12px !important;
-  font-weight: 550 !important;
+  font-size: 12.5px !important;
+  font-weight: 500 !important;
   cursor: pointer !important;
   transition: background 100ms ease !important;
 }
@@ -6730,12 +6904,28 @@ body,
 }
 
 .project-node__count {
-  font-size: 10px !important;
+  font-size: 10.5px !important;
   color: #94a3b8 !important;
 }
 
 .project-node__children {
   margin-top: 1px !important;
+}
+
+.project-node__expand-btn {
+  width: 100% !important;
+  text-align: left !important;
+  padding: 4px 8px 4px 28px !important;
+  background: transparent !important;
+  border: none !important;
+  font-size: 11px !important;
+  color: #94a3b8 !important;
+  cursor: pointer !important;
+  transition: color 120ms ease !important;
+}
+
+.project-node__expand-btn:hover {
+  color: #475569 !important;
 }
 
 .workspace-dropdown {

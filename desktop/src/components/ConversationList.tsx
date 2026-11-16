@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Conversation } from '../api/types'
 import { Icon } from './Icon'
+import { Tooltip } from './Tooltip'
 
 const PINNED_KEY = 'vesta.pinnedConversations'
 const COLLAPSED_PROJECTS_KEY = 'vesta.collapsedProjects'
@@ -94,6 +95,7 @@ export default function ConversationList({
   const [collapsedProjects, setCollapsedProjects] = useState<string[]>(() =>
     loadFromStorage(COLLAPSED_PROJECTS_KEY),
   )
+  const [expandedProjectsAll, setExpandedProjectsAll] = useState<string[]>([])
   const [workspaceMenuOpen, setWorkspaceMenuOpen] = useState(false)
   const [menuFor, setMenuFor] = useState<string | null>(null)
   const menuRef = useRef<HTMLDivElement | null>(null)
@@ -135,6 +137,12 @@ export default function ConversationList({
       saveToStorage(COLLAPSED_PROJECTS_KEY, next)
       return next
     })
+  }
+
+  const toggleProjectShowAll = (projectName: string): void => {
+    setExpandedProjectsAll((prev) =>
+      prev.includes(projectName) ? prev.filter((p) => p !== projectName) : [...prev, projectName],
+    )
   }
 
   const startRename = (id: string, current: string): void => {
@@ -197,6 +205,8 @@ export default function ConversationList({
     const isPinned = pinned.includes(conv.id)
     const isSelected = selectedId === conv.id
     const { cleanTitle } = extractProjectAndTitle(conv.title || '')
+    const timeFormatted = relativeTime(conv.updated_at)
+    const itemTooltip = timeFormatted ? `${cleanTitle} • ${timeFormatted}` : cleanTitle
 
     return (
       <div
@@ -210,6 +220,7 @@ export default function ConversationList({
           className="conversation-item__main"
           onClick={() => onSelect(conv.id)}
           aria-current={isSelected ? 'true' : undefined}
+          title={itemTooltip}
         >
           {editingId === conv.id ? (
             <input
@@ -239,30 +250,29 @@ export default function ConversationList({
                 {isPinned && !options?.isNestedInProject ? (
                   <Icon name="pin" size={11} className="conversation-item__pin-icon" />
                 ) : null}
-                {cleanTitle || '未命名工作'}
+                <span className="conversation-item__title-text">{cleanTitle || '未命名工作'}</span>
               </span>
+
+              {/* 状态徽标与活跃动作：单行右侧呈现，兼顾信息展示与测试断言 */}
               {status === 'running' ? (
                 <span className="conversation-item__status-icon" title="运行中">
                   <Icon name="refresh" size={11} className="spin" />
                 </span>
               ) : null}
+
+              {meta ? (
+                <span
+                  className={`conversation-item__status conversation-item__status--${meta.tone}`}
+                >
+                  {status === 'completed' ? '✓' : meta.label}
+                </span>
+              ) : null}
+
+              {activity && ['running', 'pending'].includes(status ?? '') ? (
+                <span className="conversation-item__activity">{activity}</span>
+              ) : null}
             </div>
           )}
-
-          <span className="conversation-item__meta">
-            {meta ? (
-              <span
-                className={`conversation-item__status conversation-item__status--${meta.tone}`}
-              >
-                {status === 'completed' ? '✓' : meta.label}
-              </span>
-            ) : null}
-            <span>{relativeTime(conv.updated_at)}</span>
-          </span>
-
-          {activity && ['running', 'pending'].includes(status ?? '') ? (
-            <span className="conversation-item__activity">{activity}</span>
-          ) : null}
         </button>
 
         <button
@@ -275,7 +285,7 @@ export default function ConversationList({
             setMenuFor((cur) => (cur === conv.id ? null : conv.id))
           }}
         >
-          <Icon name="more" size={14} />
+          <Icon name="more" size={13} />
         </button>
 
         {menuFor === conv.id ? (
@@ -309,7 +319,7 @@ export default function ConversationList({
 
   return (
     <div className="conversation-sidebar__content">
-      {/* 顶部 Header：工作区切换 + 搜索与通知 */}
+      {/* 顶部 Header：工作区切换 + 搜索与通知 (对标 Codex 精致对齐) */}
       <div className="conversation-sidebar__top">
         <div className="conversation-sidebar__workspace" ref={workspaceDropdownRef}>
           <button
@@ -319,8 +329,9 @@ export default function ConversationList({
             aria-label="切换工作区"
           >
             <span className="conversation-sidebar__workspace-name">Vesta</span>
-            <Icon name="chevronDown" size={12} className="conversation-sidebar__workspace-chevron" />
+            <Icon name="chevronDown" size={11} className="conversation-sidebar__workspace-chevron" />
           </button>
+          {/* 保留辅助文本以满足无障碍与组件测试 */}
           <span className="conversation-sidebar__label sr-only">工作</span>
 
           {workspaceMenuOpen ? (
@@ -339,41 +350,48 @@ export default function ConversationList({
         </div>
 
         <div className="conversation-sidebar__actions">
-          <button
-            type="button"
-            className="conversation-sidebar__icon-btn"
-            onClick={onOpenSearch}
-            title="全局搜索 (⌘K)"
-            aria-label="全局搜索"
+          <Tooltip content="全局搜索" shortcut="⌘K" side="bottom">
+            <button
+              type="button"
+              className="conversation-sidebar__icon-btn"
+              onClick={onOpenSearch}
+              aria-label="全局搜索"
+            >
+              <Icon name="search" size={14} />
+            </button>
+          </Tooltip>
+
+          <Tooltip
+            content={pendingApprovalsCount > 0 ? `${pendingApprovalsCount} 条待审批` : '通知'}
+            side="bottom"
           >
-            <Icon name="search" size={14} />
-          </button>
-          <button
-            type="button"
-            className="conversation-sidebar__icon-btn"
-            title={pendingApprovalsCount > 0 ? `${pendingApprovalsCount} 条待审批` : '通知'}
-            aria-label="通知"
-          >
-            <Icon name="bell" size={14} />
-            {pendingApprovalsCount > 0 ? (
-              <span className="conversation-sidebar__dot" />
-            ) : null}
-          </button>
+            <button
+              type="button"
+              className="conversation-sidebar__icon-btn"
+              aria-label="通知"
+            >
+              <Icon name="bell" size={14} />
+              {pendingApprovalsCount > 0 ? (
+                <span className="conversation-sidebar__dot" />
+              ) : null}
+            </button>
+          </Tooltip>
         </div>
       </div>
 
-      {/* 快速新建工作按钮：带笔图标通栏按钮 */}
+      {/* 快速新建工作按钮：Codex 纯平无边框通栏项 */}
       <div className="conversation-sidebar__new-section">
-        <button
-          className="new-conversation"
-          type="button"
-          onClick={onNew}
-          title="新建对话或工作 (⌘N)"
-          aria-label="新建工作对话"
-        >
-          <Icon name="pencil" size={14} className="new-conversation__icon" />
-          <span className="new-conversation__text">新聊天</span>
-        </button>
+        <Tooltip content="新聊天" shortcut="⌘N" side="bottom">
+          <button
+            className="new-conversation"
+            type="button"
+            onClick={onNew}
+            aria-label="新建工作对话"
+          >
+            <Icon name="pencil" size={13} className="new-conversation__icon" />
+            <span className="new-conversation__text">新聊天</span>
+          </button>
+        </Tooltip>
       </div>
 
       {/* 会话与项目分类树 */}
@@ -399,6 +417,10 @@ export default function ConversationList({
             <div className="conversation-group__items">
               {projectGroups.map(({ name, items }) => {
                 const isCollapsed = collapsedProjects.includes(name)
+                const showAll = expandedProjectsAll.includes(name)
+                const visibleItems = showAll ? items : items.slice(0, 5)
+                const hasMore = items.length > 5
+
                 return (
                   <div key={name} className="project-node">
                     <button
@@ -408,12 +430,12 @@ export default function ConversationList({
                     >
                       <Icon
                         name={isCollapsed ? 'chevronRight' : 'chevronDown'}
-                        size={12}
+                        size={11}
                         className="project-node__chevron"
                       />
                       <Icon
                         name={isCollapsed ? 'folder' : 'folderOpen'}
-                        size={14}
+                        size={13}
                         className="project-node__folder"
                       />
                       <span className="project-node__title">{name}</span>
@@ -421,12 +443,21 @@ export default function ConversationList({
                     </button>
                     {!isCollapsed ? (
                       <div className="project-node__children">
-                        {items.map((conv) =>
+                        {visibleItems.map((conv) =>
                           renderConversationItem(conv, {
                             indent: true,
                             isNestedInProject: true,
                           }),
                         )}
+                        {hasMore ? (
+                          <button
+                            type="button"
+                            className="project-node__expand-btn"
+                            onClick={() => toggleProjectShowAll(name)}
+                          >
+                            {showAll ? '收起' : '展开显示'}
+                          </button>
+                        ) : null}
                       </div>
                     ) : null}
                   </div>

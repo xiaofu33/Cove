@@ -37,6 +37,7 @@ docs/learning-notes.md
 docs/desktop-learning-notes.md
 
 # Desktop (Electron / Vite)
+desktop/node_modules
 desktop/node_modules/
 desktop/dist/
 desktop/dist-electron/

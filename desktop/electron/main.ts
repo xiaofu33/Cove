@@ -137,8 +137,10 @@ function createWindow(): void {
           titleBarStyle: 'hiddenInset' as const,
           trafficLightPosition: { x: -100, y: -100 },
           acceptFirstMouse: true,
-          vibrancy: 'menu' as const,
+          transparent: true,
+          vibrancy: 'under-window' as const,
           visualEffectState: 'active' as const,
+          backgroundColor: '#00000000',
         }
       : {}),
     webPreferences: {
