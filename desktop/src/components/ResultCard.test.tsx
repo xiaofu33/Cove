@@ -49,4 +49,10 @@ describe('ResultCard', () => {
     expect(html).not.toContain('target="_blank"')
     expect(html).not.toContain('下载')
   })
+
+  it('卡片提供完整无障碍名称与标准操作按钮', () => {
+    const html = renderToStaticMarkup(<ResultCard artifact={base} />)
+    expect(html).toContain('aria-label="交付成果: Market Report"')
+    expect(html).toContain('result-card__btn')
+  })
 })

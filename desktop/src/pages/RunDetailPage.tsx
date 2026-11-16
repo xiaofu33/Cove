@@ -44,7 +44,7 @@ export default function RunDetailPage({
   const cancel = async (): Promise<void> => {
     try {
       await cancelRun(runId)
-      toast.info('Run cancelled')
+      toast.info('执行已取消')
       void queryClient.invalidateQueries({ queryKey: ['run', runId] })
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : String(cause))
@@ -55,7 +55,7 @@ export default function RunDetailPage({
   const recover = async (): Promise<void> => {
     try {
       const next = await recoverRun(runId)
-      toast.success(`Recovered as Run ${next.run.id.slice(0, 8)}`)
+      toast.success(`已恢复为新执行 ${next.run.id.slice(0, 8)}`)
       void queryClient.invalidateQueries({ queryKey: ['runs'] })
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : String(cause))
@@ -64,94 +64,134 @@ export default function RunDetailPage({
 
   return (
     <PageShell
-      title="Run details"
-      subtitle={`Execution ${runId.slice(0, 8)}`}
+      title="执行详情"
+      subtitle={`执行 ID: ${runId.slice(0, 8)}`}
       maxWidth={1040}
       actions={
         <div className="page-actions">
-          <button className="btn btn-sm" onClick={onBack}><Icon name="panelOpen" size={14} /> History</button>
+          <button className="btn btn-sm" onClick={onBack} title="返回执行历史">
+            <Icon name="panelOpen" size={14} /> 历史列表
+          </button>
           {run ? <RunBadge status={run.status} /> : null}
-          {run?.status === 'running' ? <button className="btn btn-danger btn-sm" onClick={() => setConfirmCancel(true)}>Stop</button> : null}
-          {run?.status === 'interrupted' ? <button className="btn btn-primary btn-sm" onClick={() => void recover()}>Recover</button> : null}
+          {run?.status === 'running' ? (
+            <button className="btn btn-danger btn-sm" onClick={() => setConfirmCancel(true)}>
+              终止执行
+            </button>
+          ) : null}
+          {run?.status === 'interrupted' ? (
+            <button className="btn btn-primary btn-sm" onClick={() => void recover()}>
+              恢复执行
+            </button>
+          ) : null}
         </div>
       }
     >
-      {runQuery.isPending || traceQuery.isPending ? <LoadingState label="Loading run…" />
-        : runQuery.isError || traceQuery.isError ? <ErrorState message={String(runQuery.error ?? traceQuery.error)} />
-          : run ? (
-            <div className="run-detail">
-              <section className="run-summary">
-                <div className="section-heading">
-                  <div><h2>Summary</h2><p>{run.user_message || 'Untitled execution'}</p></div>
-                  {run.conversation_id ? (
-                    <button
-                      type="button"
-                      className="btn btn-sm"
-                      onClick={() => onOpenConversation(run.conversation_id as string)}
-                    >
-                      <Icon name="chat" size={14} /> Open conversation
-                    </button>
-                  ) : null}
-                </div>
-                {error ? <div className="run-error"><strong>{error.title}</strong><p>{error.message}</p></div> : null}
-                <dl className="stat-strip">
-                  <div><dt>Status</dt><dd>{run.status}</dd></div>
-                  <div><dt>Mode</dt><dd>{run.mode}</dd></div>
-                  <div><dt>Steps</dt><dd>{turn.steps || traceQuery.data?.run.steps || 0}</dd></div>
-                  <div><dt>Actions</dt><dd>{turn.toolCount}</dd></div>
-                  <div><dt>Tokens</dt><dd>{turn.usage ? formatTokens(turn.usage.totalTokens) : formatTokens(traceQuery.data?.run.total_tokens ?? 0)}</dd></div>
-                  <div><dt>Duration</dt><dd>{formatDuration(turn.durationMs) || '—'}</dd></div>
-                </dl>
-              </section>
-
-              <section className="run-detail-section">
-                <div className="section-heading"><div><h2>Usage</h2><p>Main Agent, Post-Run, cache, and Provider total</p></div></div>
-                <UsageInspector summary={traceQuery.data?.usage} />
-              </section>
-
-              <section className="run-detail-section">
-                <div className="section-heading"><div><h2>Execution</h2><p>Human-readable work timeline</p></div></div>
-                <ActivityItems events={events} />
-              </section>
-
-              <section className="run-detail-section">
-                <div className="section-heading"><div><h2>Context</h2><p>Per-step input and compaction</p></div></div>
-                <ContextInspector events={events} />
-              </section>
-
-              <RunArtifactsSection artifacts={artifactsQuery.data ?? []} />
-
-              {computerQuery.data?.observation ? (
-                <section className="run-detail-section">
-                  <ComputerObservationPanel
-                    observation={computerQuery.data.observation}
-                    runId={computerQuery.data.run_id}
-                    eventTime={computerQuery.data.event_time}
-                    serverUrl={SERVER_URL}
-                    title="Computer activity"
-                  />
-                </section>
+      {runQuery.isPending || traceQuery.isPending ? (
+        <LoadingState label="正在加载执行详情…" />
+      ) : runQuery.isError || traceQuery.isError ? (
+        <ErrorState message={String(runQuery.error ?? traceQuery.error)} />
+      ) : run ? (
+        <div className="run-detail">
+          <section className="run-summary">
+            <div className="section-heading">
+              <div>
+                <h2>概览</h2>
+                <p>{run.user_message || '未命名执行'}</p>
+              </div>
+              {run.conversation_id ? (
+                <button
+                  type="button"
+                  className="btn btn-sm"
+                  onClick={() => onOpenConversation(run.conversation_id as string)}
+                >
+                  <Icon name="chat" size={14} /> 打开关联会话
+                </button>
               ) : null}
-
-              <section className="run-detail-section">
-                <div className="section-heading"><div><h2>Trace</h2><p>Complete execution events grouped by model step</p></div></div>
-                <dl className="technical-grid">
-                  <div><dt>Run ID</dt><dd>{run.id}</dd></div>
-                  <div><dt>Conversation</dt><dd>{run.conversation_id ?? '—'}</dd></div>
-                  <div><dt>Provider</dt><dd>{traceQuery.data?.run.provider ?? '—'}</dd></div>
-                  <div><dt>Model</dt><dd>{traceQuery.data?.run.model ?? '—'}</dd></div>
-                  <div><dt>Stop reason</dt><dd>{run.stop_reason ?? '—'}</dd></div>
-                  <div><dt>Raw error</dt><dd>{run.error ?? '—'}</dd></div>
-                </dl>
-                <ExecutionTrace events={events} />
-              </section>
             </div>
+            {error ? (
+              <div className="run-error">
+                <strong>{error.title}</strong>
+                <p>{error.message}</p>
+              </div>
+            ) : null}
+            <dl className="stat-strip">
+              <div><dt>状态</dt><dd>{run.status}</dd></div>
+              <div><dt>模式</dt><dd>{run.mode === 'plan' ? '计划' : '普通'}</dd></div>
+              <div><dt>步数</dt><dd>{turn.steps || traceQuery.data?.run.steps || 0}</dd></div>
+              <div><dt>动作数</dt><dd>{turn.toolCount}</dd></div>
+              <div><dt>Token</dt><dd>{turn.usage ? formatTokens(turn.usage.totalTokens) : formatTokens(traceQuery.data?.run.total_tokens ?? 0)}</dd></div>
+              <div><dt>耗时</dt><dd>{formatDuration(turn.durationMs) || '—'}</dd></div>
+            </dl>
+          </section>
+
+          <section className="run-detail-section">
+            <div className="section-heading">
+              <div>
+                <h2>Token 用量</h2>
+                <p>主 Agent、后处理、缓存命中与 Provider 总计</p>
+              </div>
+            </div>
+            <UsageInspector summary={traceQuery.data?.usage} />
+          </section>
+
+          <section className="run-detail-section">
+            <div className="section-heading">
+              <div>
+                <h2>执行时间线</h2>
+                <p>按步骤展开的结构化动作轨迹</p>
+              </div>
+            </div>
+            <ActivityItems events={events} />
+          </section>
+
+          <section className="run-detail-section">
+            <div className="section-heading">
+              <div>
+                <h2>上下文</h2>
+                <p>每步输入与上下文压缩情况</p>
+              </div>
+            </div>
+            <ContextInspector events={events} />
+          </section>
+
+          <RunArtifactsSection artifacts={artifactsQuery.data ?? []} />
+
+          {computerQuery.data?.observation ? (
+            <section className="run-detail-section">
+              <ComputerObservationPanel
+                observation={computerQuery.data.observation}
+                runId={computerQuery.data.run_id}
+                eventTime={computerQuery.data.event_time}
+                serverUrl={SERVER_URL}
+                title="电脑操作记录"
+              />
+            </section>
           ) : null}
+
+          <section className="run-detail-section">
+            <div className="section-heading">
+              <div>
+                <h2>技术轨迹</h2>
+                <p>底层完整事件序列与元数据</p>
+              </div>
+            </div>
+            <dl className="technical-grid">
+              <div><dt>Run ID</dt><dd className="mono">{run.id}</dd></div>
+              <div><dt>会话 ID</dt><dd className="mono">{run.conversation_id ?? '—'}</dd></div>
+              <div><dt>Provider</dt><dd>{traceQuery.data?.run.provider ?? '—'}</dd></div>
+              <div><dt>Model</dt><dd>{traceQuery.data?.run.model ?? '—'}</dd></div>
+              <div><dt>终止原因</dt><dd>{run.stop_reason ?? '—'}</dd></div>
+              <div><dt>原始错误</dt><dd>{run.error ?? '—'}</dd></div>
+            </dl>
+            <ExecutionTrace events={events} />
+          </section>
+        </div>
+      ) : null}
       <ConfirmDialog
         open={confirmCancel}
-        title="Stop this Run?"
-        message="Vesta will stop after the current cancellable operation."
-        confirmLabel="Stop Run"
+        title="终止本次执行？"
+        message="Vesta 将在当前可取消的操作完成后停止执行。"
+        confirmLabel="终止执行"
         onConfirm={() => void cancel()}
         onCancel={() => setConfirmCancel(false)}
       />

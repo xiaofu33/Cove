@@ -1,4 +1,8 @@
-/** 当前会话任务条：常驻显示主任务摘要，详细步骤按需展开。 */
+/**
+ * 当前会话任务面板 (CurrentTaskPanel)
+ * 遵循 Codex 风格与 Apple HIG 规范：以清晰紧凑的步骤树呈现任务目标与进度，
+ * 状态同时以“符号 + 文字 + 颜色”三重表征。
+ */
 
 import type { Task, TaskStatus } from '../api/types'
 import { Icon } from './Icon'
@@ -28,10 +32,12 @@ function progress(task: Task): { done: number; total: number; percent: number } 
 }
 
 function currentStep(task: Task): string | null {
-  return task.steps.find((step) => step.status === 'in_progress')?.title
-    ?? task.steps.find((step) => step.status === 'blocked')?.title
-    ?? task.steps.find((step) => step.status === 'todo')?.title
-    ?? null
+  return (
+    task.steps.find((step) => step.status === 'in_progress')?.title ??
+    task.steps.find((step) => step.status === 'blocked')?.title ??
+    task.steps.find((step) => step.status === 'todo')?.title ??
+    null
+  )
 }
 
 export function orderConversationTasks(tasks: Task[]): Task[] {
@@ -61,10 +67,18 @@ export default function CurrentTaskPanel({ tasks }: { tasks: Task[] }): React.JS
             {step ? <span>当前步骤：{step}</span> : null}
           </div>
           <div className="current-task-panel__progress">
-            <span>{currentProgress.total > 0 ? `${currentProgress.done}/${currentProgress.total}` : '暂无步骤'}</span>
-            <i><b style={{ width: `${currentProgress.percent}%` }} /></i>
+            <span>
+              {currentProgress.total > 0
+                ? `${currentProgress.done}/${currentProgress.total}`
+                : '暂无步骤'}
+            </span>
+            <i>
+              <b style={{ width: `${currentProgress.percent}%` }} />
+            </i>
           </div>
-          {ordered.length > 1 ? <span className="current-task-panel__count">{ordered.length} 个任务</span> : null}
+          {ordered.length > 1 ? (
+            <span className="current-task-panel__count">{ordered.length} 个任务</span>
+          ) : null}
           <Icon name="chevronDown" size={15} />
         </summary>
 
@@ -72,24 +86,54 @@ export default function CurrentTaskPanel({ tasks }: { tasks: Task[] }): React.JS
           {ordered.map((task) => {
             const taskProgress = progress(task)
             return (
-              <details key={task.id} className="current-task-item">
+              <details key={task.id} className="current-task-item" open={task.id === current.id}>
                 <summary>
-                  <div><strong>{task.title}</strong><span>{STATUS_LABEL[task.status]}</span></div>
-                  <span>{taskProgress.total > 0 ? `${taskProgress.done}/${taskProgress.total}` : '无步骤'}</span>
+                  <div>
+                    <strong>{task.title}</strong>
+                    <span>{STATUS_LABEL[task.status]}</span>
+                  </div>
+                  <span>
+                    {taskProgress.total > 0
+                      ? `${taskProgress.done}/${taskProgress.total}`
+                      : '无步骤'}
+                  </span>
                   <Icon name="chevronDown" size={14} />
                 </summary>
                 <div className="current-task-item__details">
-                  {task.goal ? <p>{task.goal}</p> : task.description ? <p>{task.description}</p> : null}
+                  {task.goal ? (
+                    <p className="current-task-item__goal">{task.goal}</p>
+                  ) : task.description ? (
+                    <p className="current-task-item__goal">{task.description}</p>
+                  ) : null}
                   {task.steps.length > 0 ? (
-                    <ol>
-                      {task.steps.map((taskStep) => (
-                        <li key={taskStep.id} className={`current-task-step current-task-step--${taskStep.status}`}>
-                          <span>{taskStep.status === 'done' ? '✓' : taskStep.status === 'blocked' ? '!' : taskStep.status === 'in_progress' ? '→' : '·'}</span>
-                          <div><strong>{taskStep.title}</strong>{taskStep.note ? <small>{taskStep.note}</small> : null}</div>
+                    <ol className="current-task-step-list">
+                      {task.steps.map((taskStep, index) => (
+                        <li
+                          key={taskStep.id ?? index}
+                          className={`current-task-step current-task-step--${taskStep.status}`}
+                        >
+                          <span
+                            className="current-task-step__badge"
+                            aria-label={`状态: ${taskStep.status}`}
+                          >
+                            {taskStep.status === 'done'
+                              ? '✓'
+                              : taskStep.status === 'blocked'
+                                ? '!'
+                                : taskStep.status === 'in_progress'
+                                  ? '●'
+                                  : '○'}
+                          </span>
+                          <div className="current-task-step__content">
+                            <strong>{taskStep.title}</strong>
+                            {taskStep.note ? <small>{taskStep.note}</small> : null}
+                          </div>
                         </li>
                       ))}
                     </ol>
-                  ) : <span className="empty-inline">该任务还没有拆分步骤。</span>}
+                  ) : (
+                    <span className="empty-inline">该任务还没有拆分步骤。</span>
+                  )}
                 </div>
               </details>
             )

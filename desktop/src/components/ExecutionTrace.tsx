@@ -1,4 +1,8 @@
-/** Execution Trace：按步骤与事件类别查看完整技术轨迹。 */
+/**
+ * Execution Trace：按步骤与事件类别查看完整技术轨迹。
+ * 遵循渐进式披露 (Progressive Disclosure) 原则：默认展示紧凑事件摘要与耗时，
+ * 点击展开查看原始入参与 JSON 结构。
+ */
 
 import { useMemo, useState } from 'react'
 
@@ -6,6 +10,7 @@ import type { AgentEvent } from '../api/types'
 import { buildTraceGroups } from '../agent/runAnalysis'
 import { formatDuration, formatTokens } from '../agent/turnPresentation'
 import { EmptyState } from './ui'
+import { Icon } from './Icon'
 
 type TraceFilter = 'all' | 'model' | 'tools' | 'approval' | 'memory'
 
@@ -48,11 +53,23 @@ function eventMeta(event: AgentEvent): string {
 
 export default function ExecutionTrace({ events }: { events: AgentEvent[] }): React.JSX.Element {
   const [filter, setFilter] = useState<TraceFilter>('all')
+  const [copiedId, setCopiedId] = useState<string | null>(null)
+
   const filtered = useMemo(() => events.filter((event) => matches(event, filter)), [events, filter])
   const groups = useMemo(() => buildTraceGroups(filtered), [filtered])
 
+  const copyEventJson = async (eventId: string, raw: AgentEvent): Promise<void> => {
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(raw, null, 2))
+      setCopiedId(eventId)
+      setTimeout(() => setCopiedId(null), 1500)
+    } catch {
+      /* ignore */
+    }
+  }
+
   return (
-    <div className="execution-trace">
+    <div className="execution-trace" aria-label="执行轨迹检查器">
       <div className="trace-filters" aria-label="Trace filters">
         {FILTERS.map((item) => (
           <button
@@ -68,23 +85,50 @@ export default function ExecutionTrace({ events }: { events: AgentEvent[] }): Re
       </div>
       {groups.length === 0 ? (
         <EmptyState title="没有匹配的 Trace" hint="切换筛选条件查看其它事件。" />
-      ) : groups.map((group) => (
-        <section key={group.id} className="trace-group">
-          <h3>{group.label}</h3>
-          <div className="trace-events">
-            {group.events.map((event) => (
-              <details key={event.event_id} className={`trace-event trace-event--${event.type.includes('failed') ? 'failed' : 'normal'}`}>
-                <summary>
-                  <time>{time(event.event_time)}</time>
-                  <span>{event.type.replaceAll('_', ' ')}</span>
-                  <small>{eventMeta(event)}</small>
-                </summary>
-                <pre>{JSON.stringify(event, null, 2)}</pre>
-              </details>
-            ))}
-          </div>
-        </section>
-      ))}
+      ) : (
+        groups.map((group) => (
+          <section key={group.id} className="trace-group">
+            <h3 className="trace-group__title">{group.label}</h3>
+            <div className="trace-events">
+              {group.events.map((event) => {
+                const isFailed =
+                  event.type.includes('failed') ||
+                  (event.tool_result !== null && !event.tool_result.success)
+                const meta = eventMeta(event)
+
+                return (
+                  <details
+                    key={event.event_id}
+                    className={`trace-event trace-event--${isFailed ? 'failed' : 'normal'}`}
+                  >
+                    <summary className="trace-event__summary">
+                      <time className="trace-event__time mono">{time(event.event_time)}</time>
+                      <span className="trace-event__type">{event.type.replaceAll('_', ' ')}</span>
+                      {meta ? <small className="trace-event__meta">{meta}</small> : null}
+                      <Icon name="chevronDown" size={13} />
+                    </summary>
+                    <div className="trace-event__body">
+                      <div className="trace-event__actions">
+                        <button
+                          type="button"
+                          className="btn btn-ghost btn-xs"
+                          onClick={() => void copyEventJson(event.event_id, event)}
+                        >
+                          <Icon name={copiedId === event.event_id ? 'check' : 'file'} size={12} />
+                          <span>{copiedId === event.event_id ? '已复制 JSON' : '复制 JSON'}</span>
+                        </button>
+                      </div>
+                      <pre className="trace-event__code mono">
+                        {JSON.stringify(event, null, 2)}
+                      </pre>
+                    </div>
+                  </details>
+                )
+              })}
+            </div>
+          </section>
+        ))
+      )}
     </div>
   )
 }

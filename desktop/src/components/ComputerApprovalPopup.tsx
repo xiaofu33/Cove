@@ -161,8 +161,26 @@ export function ApprovalFloatingCard({
   const canDecide = phase === 'pending' || phase === 'rpc_error'
   const showProgress = !canDecide
 
+  const handleKeyDown = (e: React.KeyboardEvent): void => {
+    if (!canDecide || busy) return
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      onApprove(approval.id)
+    } else if (e.key === 'Escape') {
+      e.preventDefault()
+      onDeny(approval.id)
+    }
+  }
+
   return (
-    <div className="floating-approval" data-testid="approval-floating-card">
+    <div
+      className="floating-approval"
+      data-testid="approval-floating-card"
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
+      role="region"
+      aria-label="电脑控制权限审批"
+    >
       <header className="floating-approval__bar">
         <span className="floating-approval__brand">
           <span className="floating-approval__dot" aria-hidden="true" />
@@ -199,6 +217,11 @@ export function ApprovalFloatingCard({
             <div className="floating-approval__tech">{techLine}</div>
           ) : null}
           <pre className="floating-approval__json">{argsText}</pre>
+          <div className="floating-approval__details-footer">
+            <span className="floating-approval__hint">
+              如需查看完整上下文与执行轨迹，可在主窗口中查看
+            </span>
+          </div>
         </details>
 
         {error ? (

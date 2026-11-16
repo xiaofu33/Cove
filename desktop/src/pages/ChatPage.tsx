@@ -456,12 +456,14 @@ export default function ChatPage({
   const conversationScrollRef = useRef<HTMLDivElement>(null)
   const stickToBottomRef = useRef(true)
   const scrollFrameRef = useRef<number | null>(null)
+  const [isAtBottom, setIsAtBottom] = useState(true)
 
   const handleConversationScroll = (): void => {
     const el = conversationScrollRef.current
     if (!el) return
-    stickToBottomRef.current =
-      el.scrollHeight - el.scrollTop - el.clientHeight < 120
+    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 120
+    stickToBottomRef.current = atBottom
+    setIsAtBottom(atBottom)
   }
 
   const scheduleScroll = (): void => {
@@ -620,6 +622,25 @@ export default function ChatPage({
             ) : null}
           </div>
         </div>
+
+        {!isAtBottom && (
+          <button
+            type="button"
+            className="scroll-to-bottom-btn"
+            onClick={() => {
+              const el = conversationScrollRef.current
+              if (el) {
+                el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
+                setIsAtBottom(true)
+                stickToBottomRef.current = true
+              }
+            }}
+            aria-label="回到最新"
+          >
+            <Icon name="chevronDown" size={13} />
+            <span>回到最新</span>
+          </button>
+        )}
 
         <Composer
           disabled={selectedId === null}

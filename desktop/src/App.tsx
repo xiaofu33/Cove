@@ -211,7 +211,7 @@ export default function App(): React.JSX.Element {
         <div className="window-toolbar__left">
           {/* macOS 红绿灯预留避让空间 (darwin 80px) */}
           <div className="window-toolbar__traffic-lights" aria-hidden="true" />
-          
+
           <div className="window-toolbar__nav-buttons">
             <button
               type="button"
