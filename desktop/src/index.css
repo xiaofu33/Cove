@@ -563,8 +563,34 @@ summary:focus-visible {
 }
 
 .message-thread {
-  width: min(100%, 840px);
+  width: min(100%, 760px);
   margin: 0 auto;
+}
+
+.scroll-to-bottom-btn {
+  position: absolute;
+  bottom: 84px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--radius-full, 9999px);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-separator);
+  box-shadow: var(--shadow-popup);
+  font-size: var(--text-size-caption, 12px);
+  font-weight: 500;
+  cursor: pointer;
+  z-index: 25;
+  transition: transform var(--transition-fast), background var(--transition-fast);
+}
+
+.scroll-to-bottom-btn:hover {
+  background: var(--surface-hover);
+  transform: translateX(-50%) translateY(-1px);
 }
 
 .conversation-scroll--empty .message-thread {
@@ -853,6 +879,57 @@ summary:focus-visible {
 }
 
 /* ---- Shiki 代码块（TextMate 高亮，视觉接近 VS Code）---- */
+.code-block-wrapper {
+  margin: 14px 0;
+  border: 1px solid var(--border-separator);
+  border-radius: var(--radius-md, 8px);
+  background: #11141a;
+  overflow: hidden;
+}
+
+.code-block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 11px;
+  color: #8c939f;
+  user-select: none;
+}
+
+.code-block-lang {
+  font-family: var(--font-mono);
+  text-transform: lowercase;
+  font-weight: 500;
+}
+
+.code-block-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border: none;
+  border-radius: var(--radius-xs, 4px);
+  background: rgba(255, 255, 255, 0.06);
+  color: #adb5c2;
+  font-size: 11px;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.code-block-copy-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+.code-block-wrapper .assistant-code {
+  margin: 0;
+  border: none;
+  border-radius: 0;
+}
+
 .assistant-code {
   margin: 13px 0;
   padding: 14px 15px;
@@ -961,12 +1038,17 @@ summary:focus-visible {
 .assistant-reasoning__body {
   overflow: hidden;
   min-height: 0;
-  padding: 10px 12px;
-  border-left: 2px solid var(--accent);
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-  background: var(--surface);
-  color: #a2a49e;
-  font-size: 12px;
+  padding: 10px 14px;
+  border-left: 2px solid var(--accent-primary);
+  border-radius: 0 var(--radius-sm, 6px) var(--radius-sm, 6px) 0;
+  background: var(--surface-grouped);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: var(--text-size-caption, 12px);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
   line-height: 1.6;
   white-space: pre-wrap;
   word-break: break-word;

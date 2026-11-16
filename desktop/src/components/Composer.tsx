@@ -35,7 +35,10 @@ export default function Composer({
 }: ComposerProps): React.JSX.Element {
   const [internalValue, setInternalValue] = useState('')
   const [commandOpen, setCommandOpen] = useState(false)
+  const [isComposing, setIsComposing] = useState(false)
+  const isComposingRef = useRef(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+
   const draft = value ?? internalValue
   const busy = disabled || sending
   const canSend = draft.trim() !== '' && !busy
@@ -56,11 +59,13 @@ export default function Composer({
     onValueChange?.(next)
   }
 
+  // 随文本输入高度平滑自适应，最高扩展至 200px
   useEffect(() => {
     const textarea = textareaRef.current
     if (!textarea) return
     textarea.style.height = '0px'
-    textarea.style.height = `${Math.min(textarea.scrollHeight, 160)}px`
+    const newHeight = Math.min(Math.max(textarea.scrollHeight, 40), 200)
+    textarea.style.height = `${newHeight}px`
   }, [draft])
 
   const submit = async (): Promise<void> => {
@@ -75,6 +80,32 @@ export default function Composer({
     }
   }
 
+  const handleCompositionStart = (): void => {
+    setIsComposing(true)
+    isComposingRef.current = true
+  }
+
+  const handleCompositionEnd = (): void => {
+    setIsComposing(false)
+    isComposingRef.current = false
+  }
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>): void => {
+    // 中文输入法 (IME) 组合输入期间，Return 仅确认候选字，绝对禁止发送消息 (AC03)
+    if (isComposing || isComposingRef.current || event.nativeEvent.isComposing) {
+      return
+    }
+
+    const isMac = navigator.platform.toUpperCase().includes('MAC')
+    const cmdOrCtrl = isMac ? event.metaKey : event.ctrlKey
+
+    // 支持 Cmd+Enter / Ctrl+Enter 或常规 Enter（非 Shift+Enter）发送
+    if ((cmdOrCtrl && event.key === 'Enter') || (event.key === 'Enter' && !event.shiftKey)) {
+      event.preventDefault()
+      void submit()
+    }
+  }
+
   return (
     <div className="composer-dock">
       <div className={`composer ${busy ? 'composer--busy' : ''}`}>
@@ -83,12 +114,9 @@ export default function Composer({
           className="composer__input"
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter' && !event.shiftKey) {
-              event.preventDefault()
-              void submit()
-            }
-          }}
+          onCompositionStart={handleCompositionStart}
+          onCompositionEnd={handleCompositionEnd}
+          onKeyDown={handleKeyDown}
           placeholder="告诉 Vesta 你想完成什么…"
           rows={1}
           disabled={busy}
@@ -138,11 +166,13 @@ export default function Composer({
           )}
         </div>
       </div>
-      <CommandPalette
-        open={Boolean(commands?.length) && commandOpen}
-        commands={commands ?? []}
-        onClose={() => setCommandOpen(false)}
-      />
+      {commandOpen && commands && (
+        <CommandPalette
+          open={commandOpen}
+          commands={commands}
+          onClose={() => setCommandOpen(false)}
+        />
+      )}
     </div>
   )
 }

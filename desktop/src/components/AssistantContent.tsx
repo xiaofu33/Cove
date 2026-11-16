@@ -3,6 +3,7 @@
  *  - react-markdown 默认转义原始 HTML（安全渲染），remark-gfm 提供表格 / 任务列表 / 删除线。
  *  - Shiki 使用 TextMate grammar，视觉接近 VS Code；走纯 JS 正则引擎，Electron/Vite 无需 WASM。
  *  - 同步渲染 + 客户端异步高亮：SSR / 测试环境代码块回退为纯文本 <pre><code>。
+ *  - 支持单代码块一键纯净复制 (Copy) 与语言标签显示。
  */
 
 import { Children, isValidElement, memo, useEffect, useRef, useState } from 'react'
@@ -13,6 +14,7 @@ import remarkGfm from 'remark-gfm'
 import { createHighlighterCore } from 'shiki/core'
 import type { HighlighterCore } from 'shiki/core'
 import { createJavaScriptRegexEngine } from '@shikijs/engine-javascript'
+import { Icon } from './Icon'
 
 const THEME = 'github-dark'
 
@@ -57,6 +59,19 @@ function getHighlighter(): Promise<HighlighterCore> {
   return highlighterPromise
 }
 
+/** 复制代码块纯净源码到系统剪贴板 */
+async function copyToClipboard(text: string): Promise<boolean> {
+  try {
+    if (navigator?.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text)
+      return true
+    }
+  } catch {
+    /* 剪贴板不可用时降级为 input 选中 */
+  }
+  return false
+}
+
 /** Shiki 代码块：先渲染纯文本，挂载后异步替换为高亮 HTML。
 streaming=true（正文仍在流式增长）时跳过高亮，只显示纯文本 <pre><code>；
 完成后由父组件以 streaming=false 重新渲染，再走 debounce 高亮。 */
@@ -70,7 +85,9 @@ function CodeBlock({
   streaming: boolean
 }): ReactElement {
   const [html, setHtml] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
   const timerRef = useRef<number | null>(null)
+  const copyTimerRef = useRef<number | null>(null)
 
   useEffect(() => {
     if (streaming) return
@@ -101,18 +118,41 @@ function CodeBlock({
     }
   }, [code, lang, streaming])
 
-  if (html !== null) {
-    return (
-      <div
-        className="assistant-code"
-        dangerouslySetInnerHTML={{ __html: html }}
-      />
-    )
+  const handleCopy = async (): Promise<void> => {
+    const success = await copyToClipboard(code)
+    if (success) {
+      setCopied(true)
+      if (copyTimerRef.current !== null) window.clearTimeout(copyTimerRef.current)
+      copyTimerRef.current = window.setTimeout(() => setCopied(false), 1600)
+    }
   }
+
   return (
-    <pre className="assistant-code">
-      <code>{code}</code>
-    </pre>
+    <div className="code-block-wrapper">
+      <div className="code-block-header">
+        <span className="code-block-lang">{lang}</span>
+        <button
+          type="button"
+          className="code-block-copy-btn"
+          onClick={() => void handleCopy()}
+          aria-label={copied ? '已复制代码' : '复制代码'}
+          title={copied ? '已复制代码' : '复制代码'}
+        >
+          <Icon name={copied ? 'check' : 'file'} size={13} />
+          <span>{copied ? '已复制' : '复制'}</span>
+        </button>
+      </div>
+      {html !== null ? (
+        <div
+          className="assistant-code"
+          dangerouslySetInnerHTML={{ __html: html }}
+        />
+      ) : (
+        <pre className="assistant-code">
+          <code>{code}</code>
+        </pre>
+      )}
+    </div>
   )
 }
 
