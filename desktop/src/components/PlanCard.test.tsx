@@ -41,4 +41,12 @@ describe('PlanCard', () => {
     expect(html).toContain('Reject')
     expect(html).not.toContain('Approval required')
   })
+
+  it('显示规划步骤总数与规范化序号', () => {
+    const html = renderToStaticMarkup(
+      <PlanCard task={task} onAccept={() => {}} onReject={() => {}} />,
+    )
+    expect(html).toContain('2 个规划步骤')
+    expect(html).toContain('plan-card__step-number')
+  })
 })
