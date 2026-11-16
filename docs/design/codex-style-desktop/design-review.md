@@ -196,7 +196,48 @@
 
 ---
 
-## 6. D01–D14 设计规则逐项合规对照表
+## 6. P7 专项审查：macOS 原生体验、外观模式与系统无障碍深度审查
+
+依据 Apple HIG `the-menu-bar.md`、`dark-mode.md`、`materials.md`、`motion.md`、`accessibility.md` 对 P7 阶段进行系统级深度审查：
+
+### 6.1 系统菜单栏 (The Menu Bar) 与全局快捷键覆盖
+- **HIG 依据**：
+  - `the-menu-bar.md › Best practices`：“Support the default system-defined menus and their ordering... Always show the same set of menu items. If a menu bar item isn’t actionable, disable the action instead of hiding it from the menu.”
+  - `designing-for-macos.md › Best practices`：“Use the menu bar to give people easy access to all the commands they need to do things in your app.”
+- **设计审查要点**：
+  1. **标准菜单栏结构健全**：
+     - **App Menu**：`关于 Vesta`、`设置… (⌘,)`、`服务`、`隐藏 Vesta (⌘H)`、`隐藏其他 (⌥⌘H)`、`退出 Vesta (⌘Q)`。
+     - **文件 (File)**：`新建会话 (⌘N)`、`关闭窗口 (⌘W)`。
+     - **编辑 (Edit)**：标准的撤销/重做/剪切/复制/粘贴/全选，与原生剪贴板及 Chromium 原生角色解耦绑定。
+     - **视图 (View)**：`切换侧边栏 (⌥⌘S)`、`切换检查器 (⌥⌘I)`、`实际大小 (⌘0)`、`放大 (⌘+)`、`缩小 (⌘-)`、`进入全屏幕 (^⌘F)`。
+     - **会话/执行 (Agent)**：`发送消息 (⌘Return)`、`停止当前执行 (⌘.)`（根据是否有执行中的 Run 动态启用/禁用）。
+  2. **无快捷键冲突**：系统级快捷键无截断、无覆盖，全键盘操作路径完整且符合 macOS 原生操作习惯。
+
+### 6.2 系统浅色/深色外观自适应与材质深度规范
+- **HIG 依据**：
+  - `dark-mode.md › Best practices`：“Avoid offering an app-specific appearance setting... Ensure that your app looks good in both appearance modes... embrace colors that adapt to the current appearance.”
+  - `materials.md › Liquid Glass`：“Don’t use Liquid Glass in the content layer. Standard materials help with visual differentiation within the content layer.”
+- **设计审查要点**：
+  1. **外观动态联动**：应用外观完全由系统 `nativeTheme.shouldUseDarkColors` 与 CSS 媒体查询驱动，平滑热切换；彻底杜绝第三方私有亮/暗选择器。
+  2. **材质分层遵从**：
+     - 正文内容层、表单与列表严格采用实底 `--surface-card` 与 `--surface-grouped`，绝不滥用全屏模糊以防文字边缘眩光与阅读疲劳；
+     - 悬浮控制层（顶栏窗口工具栏、无焦点审批浮窗）采用规则磨砂质感（`backdrop-filter: blur(20px)`），形成清晰的前后景空间深度。
+
+### 6.3 系统无障碍偏好全覆盖 (Accessibility Accommodations)
+- **HIG 依据**：
+  - `accessibility.md › Cognitive`：“Be cautious with fast-moving and blinking animations... people can turn on the Reduce Motion accessibility setting. When this setting is active, ensure your app responds by reducing automatic animations.”
+  - `accessibility.md › Vision`：“If your app doesn’t provide this minimum contrast by default, ensure it at least provides a higher contrast color scheme when the system setting Increase Contrast is turned on.”
+- **设计审查要点**：
+  1. **减弱动态 (`prefers-reduced-motion`)**：
+     - 动画时长收敛为 0ms，禁用抽屉滑出与折叠平滑过渡，页面切换与状态展开采用瞬时切换，消除前庭不适感。
+  2. **减弱透明度 (`prefers-reduced-transparency`)**：
+     - 审批浮窗与顶栏所有半透明及毛玻璃样式自动转换为 100% 不透明实底（浅色 `#FFFFFF`，深色 `#1E1E1E`），保证最大可视边缘对比度。
+  3. **增强对比度 (`prefers-contrast: more`)**：
+     - 关键边框与分割线加粗至 1.5px 实体线，文本对比度上提至 ≥ 9:1，高亮焦点环增至 3px。
+
+---
+
+## 7. D01–D14 设计规则逐项合规对照表
 
 严格对照执行计划（`2026-11-16-codex-style-ui-ux-plan.md`）第 3.4 节所列的 14 项设计硬性规则：
 
@@ -219,17 +260,17 @@
 
 ---
 
-## 7. 优化建议与落地注意项 (Improvements)
+## 8. 优化建议与落地注意项 (Improvements)
 
-在管理功能组件落地中，重点关注以下两点：
+在 P7 阶段系统集成收口时，重点关注：
 
-1. **[Medium] 敏感输入防剪贴板意外泄露**：
-   - 在 `ModelSettingsPanel` 中输入 API Key 时，文本字段必须设置 `autoComplete="off"` 与 `spellCheck="false"`，符合 `entering-data.md` 规范。
-2. **[Medium] 列表项长文本截断与悬停 Tooltip**：
-   - 在侧栏会话标题与文件路径显示处，采用中段截断（`middle-truncation`）或尾部省略号，并在悬浮时展示系统级原生 Tooltip，保证长标题可读。
+1. **[Medium] 菜单栏禁用项视觉状态同步**：
+   - 当会话没有正在运行的 Run 时，“停止当前执行 (⌘.)”与“中断执行”在 macOS 原生菜单栏中应呈现正确的变灰 Disabled 状态，防止误点击。
+2. **[Low] 动态窗口缩放快捷键**：
+   - 验证 `⌘+` 与 `⌘-` 在 Electron WebContents 中是否平滑缩放，并保证最小 800×600 布局在 125% 页面缩放时依然自适应无截断。
 
 ---
 
-## 8. 结论
+## 9. 结论
 
-本套设计规范报告现已完整覆盖 P0 至 P6 阶段的全部核心组件、工作流与系统管理页面。整体设计方案在保持 OpenAI Codex 安静、专注、高效特质的同时，全面践行了 Apple HIG 的卓越无障碍与 macOS 桌面平台体验，形成了高度自洽、成熟完整的桌面级专业体验闭环。
+本套设计规范报告现已完整覆盖 P0 至 P7 阶段的全部核心组件、工作流、系统管理页面及 macOS 系统级集成规范（窗口、菜单栏、快捷键、外观模式、无障碍）。整体设计方案在保持 OpenAI Codex 安静、专注、高效特质的同时，全面践行了 Apple HIG 的卓越无障碍与 macOS 桌面平台体验，形成了高度自洽、成熟完整的桌面级专业体验闭环，为后续发行与打包交付打下了坚实的设计基石。

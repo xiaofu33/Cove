@@ -129,6 +129,10 @@ export default function App(): React.JSX.Element {
       } else if (cmdOrCtrl && e.altKey && (e.key === 's' || e.key === 'S')) {
         e.preventDefault()
         setSidebarCollapsed((prev) => !prev)
+      } else if (cmdOrCtrl && (e.key === 'n' || e.key === 'N') && !e.shiftKey && !e.altKey) {
+        e.preventDefault()
+        setSelectedConversationId(null)
+        navigate('chat')
       }
     }
     window.addEventListener('keydown', handleKeyDown)
