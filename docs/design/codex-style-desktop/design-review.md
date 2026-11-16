@@ -158,7 +158,45 @@
 
 ---
 
-## 5. D01–D14 设计规则逐项合规对照表
+## 5. P6 专项审查：管理功能与设置页面统一 (Management Pages & Settings Alignment)
+
+依据 Apple HIG `settings.md`、`lists-and-tables.md`、`entering-data.md` 对 P6 管理功能与设置页面进行专项审查：
+
+### 5.1 设置系统 (SettingsPage, ModelSettingsPanel, ExtensionsSettings) 审查
+- **HIG 依据**：
+  - `settings.md › Desktop`：“When people choose the Settings item in your app’s App menu, your custom settings window opens. Typically, a custom settings window contains a toolbar that includes buttons for switching between views — called panes... Dim a settings window's minimize and maximize buttons.”
+  - `entering-data.md › Best practices`：“Use a secure text-entry field when appropriate... Obscure people's input... Dynamically validate field values... Offer choices instead of requiring text entry.”
+- **设计审查要点**：
+  1. **原生呼出与面板架构**：
+     - 支持 `⌘,` 快捷键与 App 菜单“设置”入口呼出独立设置窗口；
+     - 顶部包含稳定固定的 Panes 切换工具栏（模型配置、扩展/MCP/技能、系统 Computer 权限）；
+     - 禁用设置窗口的最大化/缩放按钮，保持窗口紧凑与自适应；记住上次选中的 Pane。
+  2. **表单输入与凭据安全 (Entering Data)**：
+     - 文本输入框（Text Fields）严格采用 `--surface-card` 背景与 `--border-separator` 边框，高度不低于 28pt；
+     - 敏感凭据（API Keys）默认采用 `SecureField` 圆点密文掩码，提供单次“查看/隐藏”图标切换；
+     - 校验与连接测试：点击“测试连接”提供行内动态反馈（加载 Spinner、成功绿标、失败明确错误提示），杜绝粗暴的全屏阻塞弹窗。
+  3. **杜绝私有外观选择器**：
+     - 严格跟随 macOS 系统外观（Light/Dark），不提供脱离系统的独立“主题切换器”，保持平台一致性。
+
+### 5.2 数据管理页面 (Runs, Automations, Memory, Artifacts, Computer) 审查
+- **HIG 依据**：
+  - `lists-and-tables.md › Best practices`：“Prefer displaying text in a list or table... Provide appropriate feedback when people select a list item... Keep item text succinct so row content is comfortable to read.”
+  - `feedback.md › Empty states`：“When a screen has no content, display an empty state that helps people understand what to do next.”
+- **设计审查要点**：
+  1. **PageShell 页面架构与间距系统**：
+     - 统一所有管理页面的顶栏标题区（Title 16pt Medium）、副标题说明区（13pt 次级灰）与操作过滤栏（Filter Bar）；
+     - 容器采用卡片分组风格（Grouped Style），行高 44–48pt，确保点击热区与视觉疏朗。
+  2. **列表行与状态指示器**：
+     - Runs 历史与 Automations 列表：状态统一绑定“图标 + 文案 + 语义色彩”（绿色 Checkmark 已完成、黄色 Clock 运行中、红色 Alert 失败）；
+     - 选中的列表项赋予持续的 `--surface-active` 高亮底色。
+  3. **记忆 (Memory) 纯净只读分区**：
+     - 严格遵守产品定位：只读观察入口，清晰分为 Core / Active / Archived 三大区域，以纯净卡片呈现正文，杜绝伪造未实现的任意编辑/删除按钮。
+  4. **空状态优雅引导 (Empty States)**：
+     - 当列表数据为空时，展示图文引导（如“暂无待处理任务”、“暂无生成的文件”），并提供明确的下一动作（如“新建会话发起任务”），消除用户迷失感。
+
+---
+
+## 6. D01–D14 设计规则逐项合规对照表
 
 严格对照执行计划（`2026-11-16-codex-style-ui-ux-plan.md`）第 3.4 节所列的 14 项设计硬性规则：
 
@@ -181,17 +219,17 @@
 
 ---
 
-## 6. 优化建议与落地注意项 (Improvements)
+## 7. 优化建议与落地注意项 (Improvements)
 
-在 P5 审批闭环代码实现中，重点关注以下两点：
+在管理功能组件落地中，重点关注以下两点：
 
-1. **[High] 跨 Renderer 与 Main 进程的状态防双重点击与过期同步**：
-   - 当主窗口与审批浮窗同时挂载同一条 Pending Approval 时，用户在任意一侧点击“批准”，Main 进程必须原子化锁定该记录，并通过 IPC 即时将另一侧按钮置为 Disabled/已处理状态，坚决杜绝因网络延迟导致的双重执行。
-2. **[Medium] 屏幕边缘避让与多显示器适配**：
-   - 浮窗在计算展示坐标时，调用 Electron `screen.getDisplayNearestPoint(screen.getCursorScreenPoint())`，严格根据该显示器的 `workArea` 摆放，避免跨越双屏缝隙或被系统 macOS 菜单栏与 Dock 遮挡。
+1. **[Medium] 敏感输入防剪贴板意外泄露**：
+   - 在 `ModelSettingsPanel` 中输入 API Key 时，文本字段必须设置 `autoComplete="off"` 与 `spellCheck="false"`，符合 `entering-data.md` 规范。
+2. **[Medium] 列表项长文本截断与悬停 Tooltip**：
+   - 在侧栏会话标题与文件路径显示处，采用中段截断（`middle-truncation`）或尾部省略号，并在悬浮时展示系统级原生 Tooltip，保证长标题可读。
 
 ---
 
-## 7. 结论
+## 8. 结论
 
-更新后的设计审查报告已全面覆盖 P0-P5 阶段全部核心组件与系统级交互闭环。审批系统与独立无焦点浮窗在严格遵从 Apple HIG（`panels.md`、`alerts.md`、`buttons.md`）的同时，合理落实业务特定例外，为 builder 推进 P5 阶段工程落地提供了严密的指导与验收基准。
+本套设计规范报告现已完整覆盖 P0 至 P6 阶段的全部核心组件、工作流与系统管理页面。整体设计方案在保持 OpenAI Codex 安静、专注、高效特质的同时，全面践行了 Apple HIG 的卓越无障碍与 macOS 桌面平台体验，形成了高度自洽、成熟完整的桌面级专业体验闭环。

@@ -31,8 +31,8 @@
 | **P3** | 对话核心体验 (ChatPage, Composer, 消息与推理折叠) | builder | 🟢 已完成 | Composer 中文 IME 保护/高度自适应/快捷键，AssistantContent 代码高亮与纯净复制，ChatPage 滚动锚定与“回到最新”悬浮指示器 (243 测试通过) |
 | **P4** | 任务执行、运行控制与成果展示 | builder | 🟢 已完成 | 重构 CurrentTaskPanel 紧凑步骤树与状态符号，重构 PlanCard 独立确认蓝图；重构 ExecutionTrace 渐进披露（SF Mono 代码与 JSON 复制）；重构 ResultCard 成果卡片标准化 (245 测试通过) |
 | **P5** | 审批系统与 Computer Runtime 链路 | builder | 🟢 已完成 | 落地 ApprovalCard 风险等级三权分离（Prominent/Destructive）与键盘快捷操作；重构 ApprovalFloatingCard 无焦点半透明毛玻璃 HUD 浮窗与深浅色语义 Tokens；全面清除 index.css 写死样式 |
-| **P6** | 管理功能统一 (Runs, Automations, Memory, Settings) | builder | 🟡 进行中 | 页面风格统一样式与状态反馈对齐 |
-| **P7** | macOS 原生系统体验、深浅外观、可访问性与性能 | builder | ⚪ 待开始 | 主题自适应、键盘可达性、字体缩放与高负载测试 |
+| **P6** | 管理功能统一 (Runs, Automations, Memory, Settings) | builder | 🟢 已完成 | 统一 RunsPage, RunDetailPage, AutomationsPage, MemoryPage, SettingsPage 视觉层级；表单与卡片全面对齐 Tokens（消除硬编码色值并规范中文化） |
+| **P7** | macOS 原生系统体验、深浅外观、可访问性与性能 | builder | 🟡 进行中 | 主题自适应、键盘可达性、字体缩放与高负载测试 |
 | **P8** | 交付验证、文档更新与构建验收 | builder | ⚪ 待开始 | 打包验证、README 与最终交付物归档 |
 
 ---
@@ -71,7 +71,7 @@
 | **AC12** | 浅色/深色主题无缝切换，WCAG 2.1 AA 级对比度 | ⚪ 未验证 | |
 | **AC13** | 800×600 紧凑视口自适应收折，正文支持 200% 缩放无截断 | ⚪ 未验证 | |
 | **AC14** | 500+ 消息及高频 delta 流式渲染性能稳定无掉帧 | ⚪ 未验证 | |
-| **AC15** | 9 大功能页面无缝平移，不损失任何现有能力 | ⚪ 未验证 | |
+| **AC15** | 9 大功能页面无缝平移，不损失任何现有能力 | 🟢 已验证 | Chat, Runs, RunDetail, Automations, Approvals, Artifacts, Computer, Memory, Settings 全部保留并统一规范 |
 | **AC16** | 错误反馈具体明确，包含下一步指引，无假死 spinner | ⚪ 未验证 | |
 | **AC17** | `npm run build` 与生产启动正常 | ⚪ 未验证 | |
 | **AC18** | 对标 Codex 桌面端，侧边栏、正文、输入区、折叠块具备高品质感与明确差异表 | ⚪ 未验证 | |
@@ -90,4 +90,5 @@
 - `a7f9154`: `refactor(trace): 落实 ExecutionTrace 渐进式披露与 ResultCard 交付规范 (P4)`
 - `9c0af82`: `test(p4): 增加 PlanCard 步骤总数与 ResultCard 无障碍测试 (P4)`
 - `2776a3a`: `feat(approval): 完善审批卡片风险分离与无焦点毛玻璃浮窗视觉体系 (P5)`
+- `feat(settings): 统一管理与设置系统视觉规范，清除硬编码并中文化 (P6)`
 - 阶段验证结果：44 测试文件 245 用例全绿，类型检查 0 errors。
