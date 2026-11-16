@@ -3782,20 +3782,42 @@ kbd { padding: 1px 5px; border: 1px solid var(--border); border-radius: 4px; bac
 .result-card {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 8px 16px;
-  padding: 13px 14px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--surface-raised);
-  box-shadow: none;
+  gap: 10px 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--border-separator);
+  border-radius: var(--radius-lg, 12px);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-card);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
-.result-card:hover { border-color: var(--border-strong); transform: none; }
-.result-card__heading { grid-column: 1; }
+.result-card:hover {
+  border-color: rgba(0, 113, 227, 0.3);
+  box-shadow: var(--shadow-popup);
+}
+.result-card__heading { grid-column: 1; display: flex; align-items: flex-start; gap: 12px; }
+.result-card__identity { min-width: 0; }
 .result-card__desc,
 .result-card__meta { grid-column: 1; }
-.result-card__actions { grid-column: 2; grid-row: 1 / span 3; align-self: center; }
-.result-card__icon { background: #ecece8; color: var(--text-secondary); }
-.result-origin { padding: 5px 4px 0; color: var(--text-tertiary); font-size: 9.5px; }
+.result-card__actions { grid-column: 2; grid-row: 1 / span 3; align-self: center; display: flex; align-items: center; gap: 8px; }
+.result-card__icon {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 36px;
+  border-radius: var(--radius-md, 8px);
+  background: var(--accent-subtle);
+  color: var(--accent-primary);
+  border: 1px solid var(--border-separator);
+}
+.result-card__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 28px;
+  padding: 4px 10px;
+}
+.result-origin { padding: 6px 4px 0; color: var(--text-tertiary); font-size: var(--text-size-caption, 12px); }
 
 .segmented-control { display: flex; padding: 2px; border: 1px solid var(--border); border-radius: 7px; background: #eeeeeb; }
 .segmented-control button { padding: 5px 9px; border: 0; border-radius: 5px; background: transparent; color: var(--text-secondary); font-size: 10.5px; }
@@ -4630,45 +4652,91 @@ kbd { padding: 1px 5px; border: 1px solid var(--border); border-radius: 4px; bac
 .context-summary-details dt { color: var(--text-tertiary); font-size: 9px; }
 .context-summary-details dd { margin: 0; color: var(--text-secondary); font-size: 9.5px; text-align: right; }
 
-/* Trace */
+/* Trace (Codex 风格渐进式披露轨迹) */
 .execution-trace { min-width: 0; }
 .trace-filters {
   position: sticky;
   z-index: 2;
   top: -16px;
   display: flex;
-  gap: 3px;
+  gap: 4px;
   margin: -16px -16px 18px;
   padding: 10px 16px;
-  border-bottom: 1px solid var(--border);
-  background: var(--surface-raised);
+  border-bottom: 1px solid var(--border-separator);
+  background: var(--surface-window);
+}
+.trace-filters button {
+  padding: 4px 10px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm, 6px);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: var(--text-size-caption, 12px);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+.trace-filters button:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+.trace-filters button.active {
+  background: var(--surface-grouped);
+  border-color: var(--border-separator);
+  color: var(--accent-primary);
+  font-weight: 600;
 }
 .trace-group { margin-bottom: 20px; }
-.trace-events { border-top: 1px solid var(--border); }
-.trace-event { border-bottom: 1px solid var(--border); }
-.trace-event > summary {
+.trace-group__title {
+  margin: 0 0 8px;
+  font-size: var(--text-size-headline, 14px);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.trace-events { border-top: 1px solid var(--border-separator); }
+.trace-event { border-bottom: 1px solid var(--border-separator); }
+.trace-event > summary,
+.trace-event__summary {
   display: grid;
-  grid-template-columns: 62px minmax(105px, auto) 1fr;
+  grid-template-columns: 68px minmax(110px, auto) 1fr 18px;
   align-items: center;
-  gap: 8px;
-  min-height: 34px;
+  gap: 10px;
+  min-height: 38px;
   cursor: pointer;
   list-style: none;
+  user-select: none;
 }
 .trace-event > summary::-webkit-details-marker { display: none; }
-.trace-event time { color: var(--text-tertiary); font: 9px var(--font-mono); }
-.trace-event summary > span { color: var(--text); font: 9.5px var(--font-mono); }
-.trace-event summary > small { overflow: hidden; color: var(--text-tertiary); font-size: 9px; text-align: right; text-overflow: ellipsis; white-space: nowrap; }
-.trace-event--failed summary > span { color: var(--danger); }
-.trace-event pre {
-  max-height: 260px;
+.trace-event time,
+.trace-event__time { color: var(--text-tertiary); font: 11px var(--font-mono); }
+.trace-event summary > span,
+.trace-event__type { color: var(--text-primary); font: 12px var(--font-mono); font-weight: 500; }
+.trace-event summary > small,
+.trace-event__meta { overflow: hidden; color: var(--text-secondary); font-size: 11px; text-align: right; text-overflow: ellipsis; white-space: nowrap; }
+.trace-event summary > svg { color: var(--text-tertiary); transition: transform var(--transition-fast); justify-self: end; }
+.trace-event[open] summary > svg { transform: rotate(180deg); }
+.trace-event--failed summary > span { color: var(--status-error); }
+.trace-event__body {
+  padding: 0 0 10px;
+}
+.trace-event__actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 6px;
+}
+.trace-event pre,
+.trace-event__code {
+  max-height: 280px;
   margin: 0 0 8px;
-  padding: 10px;
+  padding: 12px;
   overflow: auto;
-  border-radius: var(--radius-sm);
-  background: #f1f1ee;
-  color: var(--text-secondary);
-  font-size: 9.5px;
+  border-radius: var(--radius-sm, 6px);
+  background: #11141a;
+  color: #d7dbe3;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 1.5;
+  border: 1px solid var(--border-separator);
 }
 
 /* 完整 Run Detail 复用同一组件，但不继承浮窗滚动容器的吸顶边距。 */

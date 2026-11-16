@@ -1,4 +1,8 @@
-/** 统一 Artifact 交付卡片：Chat 结果区与 ArtifactsPage 可复用。 */
+/**
+ * 统一 Artifact 交付卡片 (ResultCard)
+ * 遵循 Codex 风格与 Apple HIG 规范：卡片呈现文件类型、大小与安全操作入口，
+ * 交互控件热区达到标准尺寸 (≥ 28×28pt)。
+ */
 
 import type { ReactElement } from 'react'
 import { buildArtifactDownloadUrl } from '../api/artifacts'
@@ -12,7 +16,6 @@ function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-/** 下载/打开地址只由 opaque artifact id 构造，绝不使用 storage_path。 */
 export interface ResultCardProps {
   artifact: Artifact
 }
@@ -33,10 +36,12 @@ export default function ResultCard({ artifact }: ResultCardProps): ReactElement 
   }
 
   return (
-    <div className="result-card" data-testid="result-card">
+    <div className="result-card" data-testid="result-card" aria-label={`交付成果: ${artifact.title || artifact.filename || '产物'}`}>
       <div className="result-card__heading">
-        <span className="result-card__icon"><Icon name="file" size={18} /></span>
-        <div>
+        <span className="result-card__icon" aria-hidden="true">
+          <Icon name="file" size={18} />
+        </span>
+        <div className="result-card__identity">
           <div className="result-card__title">
             {artifact.title || artifact.filename || '交付物'}
           </div>
@@ -57,16 +62,35 @@ export default function ResultCard({ artifact }: ResultCardProps): ReactElement 
       <div className="result-card__actions">
         {isFile ? (
           <>
-            <a className="btn btn-ghost btn-sm" href={href} target="_blank" rel="noreferrer">
-              <Icon name="external" size={13} /> 打开
+            <a
+              className="btn btn-ghost btn-sm result-card__btn"
+              href={href}
+              target="_blank"
+              rel="noreferrer"
+              title="在系统默认应用中打开"
+            >
+              <Icon name="external" size={13} />
+              <span>打开</span>
             </a>
-            <a className="btn btn-ghost btn-sm" href={href} download={artifact.filename ?? undefined}>
-              <Icon name="download" size={13} /> 下载
+            <a
+              className="btn btn-ghost btn-sm result-card__btn"
+              href={href}
+              download={artifact.filename ?? undefined}
+              title="下载文件到本地"
+            >
+              <Icon name="download" size={13} />
+              <span>下载</span>
             </a>
           </>
         ) : (
-          <button type="button" className="btn btn-ghost btn-sm" onClick={openUrl}>
-            <Icon name="external" size={13} /> 打开链接
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm result-card__btn"
+            onClick={openUrl}
+            title="在新标签页中打开外部链接"
+          >
+            <Icon name="external" size={13} />
+            <span>打开链接</span>
           </button>
         )}
       </div>
