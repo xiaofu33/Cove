@@ -1045,10 +1045,6 @@ summary:focus-visible {
   color: var(--text-secondary);
   font-family: var(--font-mono);
   font-size: var(--text-size-caption, 12px);
-  line-height: 1.5;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
   line-height: 1.6;
   white-space: pre-wrap;
   word-break: break-word;
