@@ -5948,12 +5948,18 @@ body,
   height: 100vh !important;
   background: transparent !important;
   overflow: hidden !important;
+  /* 苹果官方连续曲率超椭圆 (Squircle) */
+  border-radius: 11px !important;
+  -webkit-corner-smoothing: 100% !important;
+  -electron-corner-smoothing: 100% !important;
+  /* 1px 视网膜双层精致描边，消除剪纸感 */
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1) !important;
 }
 
 /* 顶部状态栏：轻量标准毛玻璃 (Frosted Titlebar) */
 .window-toolbar {
-  height: 42px !important;
-  min-height: 42px !important;
+  height: 44px !important;
+  min-height: 44px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
@@ -5972,7 +5978,7 @@ body,
 }
 
 .window-toolbar__traffic-lights {
-  width: 76px !important;
+  width: 84px !important;
   flex-shrink: 0 !important;
 }
 
@@ -6232,17 +6238,35 @@ body,
   background: transparent !important;
 }
 
-/* 第二列：轻量级毛玻璃侧边栏面板 (Frosted Sidebar Panel) */
+/* 第二列：轻量级毛玻璃侧边栏面板 (Frosted Sidebar Panel)，支持自由拖拽缩放 */
 .conversation-sidebar {
-  width: 248px !important;
-  min-width: 248px !important;
-  flex: 0 0 248px !important;
+  width: 248px;
+  min-width: 180px;
+  flex: 0 0 auto;
+  position: relative !important;
   background: rgba(250, 250, 252, 0.4) !important;
   border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
   display: flex !important;
   flex-direction: column !important;
   overflow: hidden !important;
   transition: width 180ms cubic-bezier(0.4, 0, 0.2, 1), flex-basis 180ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.conversation-sidebar__resizer {
+  position: absolute !important;
+  top: 0 !important;
+  right: -2px !important;
+  width: 5px !important;
+  height: 100% !important;
+  cursor: col-resize !important;
+  z-index: 50 !important;
+  background: transparent !important;
+  transition: background 150ms ease !important;
+}
+
+.conversation-sidebar__resizer:hover,
+.conversation-sidebar__resizer:active {
+  background: rgba(59, 130, 246, 0.35) !important;
 }
 
 /* 主内容容器保持透明，避免覆盖侧边栏的毛玻璃透光 */
@@ -6273,11 +6297,44 @@ body,
 }
 
 .conversation-sidebar__content {
-  width: 248px !important;
+  width: 100% !important;
   height: 100% !important;
   display: flex !important;
   flex-direction: column !important;
   padding: 0 !important;
+}
+
+/* 主聊天区顶部执行状态条：紧凑轻量，消除双重工具栏视觉冗余 */
+.run-status-bar {
+  height: 38px !important;
+  min-height: 38px !important;
+  padding: 0 16px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  background: #ffffff !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
+  user-select: none !important;
+}
+
+.run-status-bar__identity {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+.run-status-bar__title {
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  color: #64748b !important;
+}
+
+.run-status-bar__stats {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  font-size: 11.5px !important;
+  color: #64748b !important;
 }
 
 .conversation-sidebar__top {

@@ -41,8 +41,8 @@ const STOP_REASON_LABEL: Record<string, string> = {
 
 export default function RunStatusBar({
   title,
-  conversationSidebarOpen,
-  onToggleConversationSidebar,
+  conversationSidebarOpen: _conversationSidebarOpen,
+  onToggleConversationSidebar: _onToggleConversationSidebar,
   runStatus,
   step,
   toolCount,
@@ -59,8 +59,8 @@ export default function RunStatusBar({
   onRecover,
 }: {
   title: string
-  conversationSidebarOpen: boolean
-  onToggleConversationSidebar: () => void
+  conversationSidebarOpen?: boolean
+  onToggleConversationSidebar?: () => void
   runStatus?: string
   step?: number | null
   toolCount?: number
@@ -111,18 +111,7 @@ export default function RunStatusBar({
 
   return (
     <header className="run-status-bar">
-      <button
-        type="button"
-        className="icon-btn"
-        onClick={onToggleConversationSidebar}
-        aria-label={conversationSidebarOpen ? '收起会话列表' : '展开会话列表'}
-        title={conversationSidebarOpen ? '收起会话列表' : '展开会话列表'}
-      >
-        <Icon name={conversationSidebarOpen ? 'panelClose' : 'panelOpen'} />
-      </button>
-
       <div className="run-status-bar__identity">
-        <span className="run-status-bar__brand">Vesta</span>
         <span className="run-status-bar__title">{title}</span>
         {running && currentAction ? (
           <span className="run-status-bar__action">· {currentAction}</span>

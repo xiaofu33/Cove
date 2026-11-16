@@ -135,7 +135,7 @@ function createWindow(): void {
     ...(process.platform === 'darwin'
       ? {
           titleBarStyle: 'hiddenInset' as const,
-          trafficLightPosition: { x: 16, y: 14 },
+          trafficLightPosition: { x: 19, y: 17 },
           transparent: true,
           vibrancy: 'under-window' as const,
           visualEffectState: 'active' as const,

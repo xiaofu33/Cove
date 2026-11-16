@@ -180,7 +180,10 @@ export default function App(): React.JSX.Element {
       if (cmdOrCtrl && e.key === ',') {
         e.preventDefault()
         navigate('settings')
-      } else if (cmdOrCtrl && e.altKey && (e.key === 's' || e.key === 'S')) {
+      } else if (
+        (cmdOrCtrl && (e.key === 'b' || e.key === 'B') && !e.shiftKey && !e.altKey) ||
+        (cmdOrCtrl && e.altKey && (e.key === 's' || e.key === 'S'))
+      ) {
         e.preventDefault()
         setSidebarCollapsed((prev) => !prev)
       } else if (cmdOrCtrl && (e.key === 'n' || e.key === 'N') && !e.shiftKey && !e.altKey) {
@@ -237,8 +240,8 @@ export default function App(): React.JSX.Element {
               type="button"
               className="window-toolbar__btn"
               onClick={() => setSidebarCollapsed((prev) => !prev)}
-              title={sidebarCollapsed ? '展开侧边栏 (⌥⌘S)' : '折叠侧边栏 (⌥⌘S)'}
-              aria-label={sidebarCollapsed ? '展开侧边栏' : '折叠侧边栏'}
+              title={sidebarCollapsed ? '展开侧边栏 (⌘B)' : '收起侧边栏 (⌘B)'}
+              aria-label={sidebarCollapsed ? '展开侧边栏' : '收起侧边栏'}
             >
               <Icon name={sidebarCollapsed ? 'panelOpen' : 'panelClose'} size={14} />
             </button>

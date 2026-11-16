@@ -60,6 +60,59 @@ export default function ChatPage({
   const [conversationSidebarOpen, setConversationSidebarOpen] = useState(
     sidebarCollapsed !== undefined ? !sidebarCollapsed : true,
   )
+  const [sidebarWidth, setSidebarWidth] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('vesta.sidebarWidth')
+      return saved ? Math.max(180, Math.min(420, Number(saved))) : 248
+    } catch {
+      return 248
+    }
+  })
+  const isDraggingRef = useRef(false)
+  const startXRef = useRef(0)
+  const startWidthRef = useRef(248)
+
+  const handleResizeStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    isDraggingRef.current = true
+    startXRef.current = e.clientX
+    startWidthRef.current = sidebarWidth
+
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+
+    const handleMouseMove = (moveEvent: MouseEvent): void => {
+      if (!isDraggingRef.current) return
+      const delta = moveEvent.clientX - startXRef.current
+      const nextWidth = Math.max(180, Math.min(420, startWidthRef.current + delta))
+      setSidebarWidth(nextWidth)
+    }
+
+    const handleMouseUp = (): void => {
+      isDraggingRef.current = false
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseup', handleMouseUp)
+      try {
+        localStorage.setItem('vesta.sidebarWidth', String(sidebarWidth))
+      } catch {
+        // ignore
+      }
+    }
+
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mouseup', handleMouseUp)
+  }, [sidebarWidth])
+
+  const handleResizeDoubleClick = useCallback(() => {
+    setSidebarWidth(248)
+    try {
+      localStorage.setItem('vesta.sidebarWidth', '248')
+    } catch {
+      // ignore
+    }
+  }, [])
   const [runInspectorOpen, setRunInspectorOpen] = useState(false)
   const [planTask, setPlanTask] = useState<Task | null>(null)
 
@@ -504,6 +557,15 @@ export default function ChatPage({
       <aside
         className={`conversation-sidebar ${conversationSidebarOpen ? 'open' : 'collapsed'}`}
         aria-hidden={!conversationSidebarOpen}
+        style={
+          conversationSidebarOpen
+            ? {
+                width: `${sidebarWidth}px`,
+                minWidth: `${sidebarWidth}px`,
+                flexBasis: `${sidebarWidth}px`,
+              }
+            : undefined
+        }
       >
         <ConversationList
           conversations={conversations}
@@ -522,6 +584,16 @@ export default function ChatPage({
           onRename={(id, title) => void renameConversationAction(id, title)}
           onDelete={(id) => void deleteConversationAction(id)}
         />
+        {conversationSidebarOpen && (
+          <div
+            className="conversation-sidebar__resizer"
+            onMouseDown={handleResizeStart}
+            onDoubleClick={handleResizeDoubleClick}
+            title="双击恢复默认宽度，拖拽调节大小"
+            role="separator"
+            aria-orientation="vertical"
+          />
+        )}
       </aside>
 
       <div className="chat-right">
