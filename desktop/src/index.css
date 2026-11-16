@@ -5931,18 +5931,26 @@ body.approval-app #root {
 
 
 /* ==========================================================================
-   Codex-Style Top Window Toolbar & Two-Column Navigation Rail
+   Codex-Style Frosted Glass (毛玻璃) & Lightweight Navigation Rail
+   轻量级 macOS 原生磨砂质感，完全移除昂贵的 CSS backdrop-filter 滤镜，极致省电流畅
    ========================================================================== */
+
+html,
+body,
+#root {
+  background: transparent !important;
+}
 
 .app-shell {
   display: flex !important;
   flex-direction: column !important;
   width: 100vw !important;
   height: 100vh !important;
-  background: #ffffff !important;
+  background: transparent !important;
   overflow: hidden !important;
 }
 
+/* 顶部状态栏：轻量标准毛玻璃 (Frosted Titlebar) */
 .window-toolbar {
   height: 42px !important;
   min-height: 42px !important;
@@ -5950,8 +5958,8 @@ body.approval-app #root {
   align-items: center !important;
   justify-content: space-between !important;
   padding: 0 14px 0 0 !important;
-  background: #ffffff !important;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.07) !important;
+  background: rgba(255, 255, 255, 0.45) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
   -webkit-app-region: drag !important;
   user-select: none !important;
   z-index: 100 !important;
@@ -6091,21 +6099,22 @@ body.approval-app #root {
   min-height: 0 !important;
   width: 100% !important;
   overflow: hidden !important;
+  background: transparent !important;
 }
 
+/* 第一列：轻量级毛玻璃活动栏 (Frosted Mini Activity Bar) */
 .sidebar.sidebar--mini {
   width: 48px !important;
   min-width: 48px !important;
   flex: 0 0 48px !important;
-  background: #fafafa !important;
-  border-right: 1px solid rgba(0, 0, 0, 0.07) !important;
+  background: rgba(246, 246, 248, 0.35) !important;
+  border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
   padding: 10px 0 12px !important;
   gap: 0 !important;
   z-index: 20 !important;
-  backdrop-filter: none !important;
 }
 
 .sidebar-brand {
@@ -6128,7 +6137,7 @@ body.approval-app #root {
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
-  gap: 5px !important;
+  gap: 6px !important;
   width: 100% !important;
 }
 
@@ -6177,7 +6186,7 @@ body.approval-app #root {
   min-width: 14px !important;
   text-align: center !important;
   line-height: 12px !important;
-  box-shadow: 0 0 0 2px #fafafa !important;
+  box-shadow: 0 0 0 2px rgba(246, 246, 248, 0.9) !important;
 }
 
 .sidebar .nav-badge--dot {
@@ -6220,20 +6229,39 @@ body.approval-app #root {
   display: flex !important;
   width: 100% !important;
   height: 100% !important;
-  background: #ffffff !important;
+  background: transparent !important;
 }
 
+/* 第二列：轻量级毛玻璃侧边栏面板 (Frosted Sidebar Panel) */
 .conversation-sidebar {
   width: 248px !important;
   min-width: 248px !important;
   flex: 0 0 248px !important;
-  background: #fafafa !important;
-  border-right: 1px solid rgba(0, 0, 0, 0.07) !important;
+  background: rgba(250, 250, 252, 0.4) !important;
+  border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
   display: flex !important;
   flex-direction: column !important;
   overflow: hidden !important;
-  backdrop-filter: none !important;
   transition: width 180ms cubic-bezier(0.4, 0, 0.2, 1), flex-basis 180ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* 主内容容器保持透明，避免覆盖侧边栏的毛玻璃透光 */
+.main {
+  background: transparent !important;
+}
+
+/* 第三列：主内容聊天区，使用不透明白色实底保证文字可读性与高对比度 */
+.chat-right {
+  background: #ffffff !important;
+}
+
+.page-container,
+.settings-page,
+.runs-page,
+.approvals-page,
+.artifacts-page,
+.computer-page {
+  background: #ffffff !important;
 }
 
 .conversation-sidebar.collapsed {
@@ -6569,8 +6597,8 @@ body.approval-app #root {
   width: 200px !important;
   background: #ffffff !important;
   border-radius: 8px !important;
-  border: 1px solid rgba(0, 0, 0, 0.1) !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
   padding: 4px !important;
 }
 
@@ -6599,6 +6627,6 @@ body.approval-app #root {
 
 .workspace-dropdown__item:hover,
 .workspace-dropdown__item.active {
-  background: #f1f5f9 !important;
+  background: rgba(0, 0, 0, 0.05) !important;
   color: #0f172a !important;
 }
