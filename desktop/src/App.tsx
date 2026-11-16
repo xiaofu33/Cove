@@ -253,7 +253,7 @@ export default function App(): React.JSX.Element {
               size={13}
               className="window-toolbar__session-icon"
             />
-            <span className="window-toolbar__session-title">{currentTitle}</span>
+            <span className="window-toolbar__session-title window-toolbar__page-title">{currentTitle}</span>
             {page === 'runs' && selectedRunId && (
               <span className="window-toolbar__subtitle">/ 详情</span>
             )}
