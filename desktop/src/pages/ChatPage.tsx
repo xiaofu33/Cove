@@ -143,6 +143,7 @@ export default function ChatPage({
     message: Message
   } | null>(null)
   const [sendError, setSendError] = useState<string | null>(null)
+  const [isCreatingConversation, setIsCreatingConversation] = useState(false)
   // Persistent AgentTurn：完成后仍保留为本轮 Work Record。
   const [liveTurnActive, setLiveTurnActive] = useState(false)
 
@@ -157,14 +158,20 @@ export default function ChatPage({
   })
   const conversations = conversationsQuery.data ?? []
 
+  // 初始加载时默认选中首个已有会话；用户主动点击新建会话后保持 selectedId === null，不自动强行重选
+  const hasInitializedSelectionRef = useRef(false)
   useEffect(() => {
-    if (selectedId === null && conversations.length > 0) {
+    if (initialConversationId) {
+      setSelectedId(initialConversationId)
+      hasInitializedSelectionRef.current = true
+    } else if (!hasInitializedSelectionRef.current && conversations.length > 0 && selectedId === null) {
+      hasInitializedSelectionRef.current = true
       selectConversation(conversations[0].id)
     }
-  }, [conversations, selectedId, selectConversation])
+  }, [conversations, initialConversationId, selectConversation, selectedId])
 
   useEffect(() => {
-    if (initialConversationId && initialConversationId !== selectedId) {
+    if (initialConversationId !== undefined && initialConversationId !== selectedId) {
       setSelectedId(initialConversationId)
     }
   }, [initialConversationId, selectedId])
@@ -318,17 +325,17 @@ export default function ChatPage({
     },
   })
 
-  const newConversationMutation = useMutation({
-    mutationFn: () => createConversation(),
-    onSuccess: (conversation) => {
-      selectConversation(conversation.id)
-      setLastRunId(null)
-      setPlanTask(null)
-      setPlanResolved(null)
-      setLiveTurnActive(false)
-      void queryClient.invalidateQueries({ queryKey: ['conversations'] })
-    },
-  })
+  /** 纯前端切换至新建会话状态：不立即向后端创建记录，避免点击新会话产生大量空白历史 */
+  const handleStartNewConversation = useCallback((): void => {
+    selectConversation(null)
+    setLastRunId(null)
+    setPlanTask(null)
+    setPlanResolved(null)
+    setInspectorState(false)
+    setLiveTurnActive(false)
+    setOptimisticMessage(null)
+    setSendError(null)
+  }, [selectConversation])
 
   /** 重命名会话（接入后端）。 */
   const renameConversationAction = async (id: string, title: string): Promise<void> => {
@@ -371,7 +378,7 @@ export default function ChatPage({
       content: string
       sendMode: AgentMode
     }) => sendMessage(conversationId, content, sendMode),
-    onSuccess: async (data) => {
+    onSuccess: async (data, variables) => {
       setLastRunId(data.run.id)
       setPlanResolved(null)
       if (data.run.mode === 'plan' && data.plan_task_id) {
@@ -384,11 +391,11 @@ export default function ChatPage({
         setPlanTask(null)
       }
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['conversation', selectedId] }),
+        queryClient.invalidateQueries({ queryKey: ['conversation', variables.conversationId] }),
         queryClient.invalidateQueries({ queryKey: ['conversations'] }),
         queryClient.invalidateQueries({ queryKey: ['runs'] }),
         queryClient.invalidateQueries({ queryKey: ['chat-artifacts'] }),
-        queryClient.invalidateQueries({ queryKey: ['tasks', selectedId] }),
+        queryClient.invalidateQueries({ queryKey: ['tasks', variables.conversationId] }),
       ])
     },
     onError: (error: unknown) => {
@@ -488,7 +495,7 @@ export default function ChatPage({
 
   // Command palette（⌘K）：轻量能力入口，不做永久按钮墙。
   const composerCommands: ComposerCommand[] = [
-    { id: 'new', label: '新建会话', icon: 'plus', onSelect: () => newConversationMutation.mutate() },
+    { id: 'new', label: '新建会话', icon: 'plus', onSelect: handleStartNewConversation },
     {
       id: 'plan',
       label: mode === 'plan' ? '切换到普通模式' : '切换到规划模式',
@@ -520,7 +527,8 @@ export default function ChatPage({
     showAgentTurn && messages.at(-1)?.role === 'assistant'
       ? messages.slice(0, -1)
       : messages
-  const showNewConversationHome = selectedId !== null && messages.length === 0
+  const isNewConversation = selectedId === null || messages.length === 0
+  const showNewConversationHome = isNewConversation && !optimisticMessage && !showAgentTurn
   const progressRunId = activeRunId
   const activeEvents = progressRunId ? (eventsByRun[progressRunId] ?? []) : []
   const latestModelStep = [...activeEvents]
@@ -534,9 +542,6 @@ export default function ChatPage({
 
   const chooseExamplePrompt = (prompt: string): void => {
     setDraft(prompt)
-    if (selectedId === null && !newConversationMutation.isPending) {
-      newConversationMutation.mutate()
-    }
   }
 
   // stick-to-bottom：用户靠近底部时自动跟随，向上滚动后停止强制拉底；
@@ -615,7 +620,7 @@ export default function ChatPage({
             setInspectorState(false)
             setLiveTurnActive(false)
           }}
-          onNew={() => newConversationMutation.mutate()}
+          onNew={handleStartNewConversation}
           onRename={(id, title) => void renameConversationAction(id, title)}
           onDelete={(id) => void deleteConversationAction(id)}
         />
@@ -643,21 +648,7 @@ export default function ChatPage({
           className={`conversation-scroll ${showNewConversationHome ? 'conversation-scroll--empty' : ''}`}
         >
           <div className="message-thread">
-            {selectedId === null ? (
-              <section className="no-conversation">
-                <div className="chat-empty__mark">V</div>
-                <h1>开始一项新工作</h1>
-                <p>创建会话，然后告诉 Vesta 你希望完成的结果。</p>
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={() => newConversationMutation.mutate()}
-                  disabled={newConversationMutation.isPending}
-                >
-                  <Icon name="plus" size={15} /> 新建会话
-                </button>
-              </section>
-            ) : showNewConversationHome ? (
+            {showNewConversationHome ? (
               <ChatEmptyState onSelectPrompt={chooseExamplePrompt} />
             ) : (
               <MessageList messages={displayMessages} />
@@ -736,8 +727,8 @@ export default function ChatPage({
         )}
 
         <Composer
-          disabled={selectedId === null}
-          sending={sendMutation.isPending}
+          disabled={isRunning}
+          sending={sendMutation.isPending || isCreatingConversation}
           running={isRunning}
           onStop={() => void pauseRun()}
           mode={mode}
@@ -750,12 +741,30 @@ export default function ChatPage({
           hasMessages={displayMessages.length > 0}
           messagesCount={displayMessages.length}
           onSend={async (content) => {
-            if (!selectedId) return
             setSendError(null)
             setLastRunId(null)
             setLiveTurnActive(true)
+
+            let targetId = selectedId
+            // 延迟创建：用户提出第一个需求并发送时，才向后端真正创建会话记录
+            if (!targetId) {
+              setIsCreatingConversation(true)
+              try {
+                const newConv = await createConversation()
+                targetId = newConv.id
+                selectConversation(targetId)
+                void queryClient.invalidateQueries({ queryKey: ['conversations'] })
+              } catch (err) {
+                setSendError(err instanceof Error ? err.message : String(err))
+                setLiveTurnActive(false)
+                throw err
+              } finally {
+                setIsCreatingConversation(false)
+              }
+            }
+
             setOptimisticMessage({
-              conversationId: selectedId,
+              conversationId: targetId,
               message: { role: 'user', content },
             })
             // 发送即定位到底部：避免先停留在上一条回复的位置，再等 live turn 出现。
@@ -764,7 +773,7 @@ export default function ChatPage({
               if (el) el.scrollTop = el.scrollHeight
             })
             await sendMutation.mutateAsync({
-              conversationId: selectedId,
+              conversationId: targetId,
               content,
               sendMode: mode,
             })
