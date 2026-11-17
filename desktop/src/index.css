@@ -3242,32 +3242,33 @@ body::before { display: none; }
 .conversation-list::-webkit-scrollbar { width: 8px; }
 .conversation-item {
   position: relative;
-  min-height: 55px;
+  min-height: 30px;
+  height: 30px;
   margin: 0;
-  padding: 9px 34px 9px 14px;
+  padding: 0;
   border: 0;
-  border-radius: 10px;
+  border-radius: 7px;
   background: transparent;
   display: flex;
-  flex-direction: column;
-  transition: background 150ms ease, color 150ms ease;
+  align-items: center;
+  transition: background 120ms ease;
 }
 .conversation-item__main {
   width: 100%;
   min-width: 0;
+  height: 30px;
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 0;
+  align-items: center;
+  padding: 5px 8px;
   border: 0;
   background: transparent;
-  color: var(--text-secondary);
+  color: #1d1d1f;
   text-align: left;
   cursor: pointer;
 }
-.conversation-item:hover { background: rgba(0, 0, 0, 0.06); }
-.conversation-item:hover .conversation-item__main { color: var(--text-primary); }
-.conversation-item.active { background: rgba(0, 0, 0, 0.08); }
+.conversation-item:hover { background: rgba(0, 0, 0, 0.035); }
+.conversation-item:hover .conversation-item__main { color: #1d1d1f; }
+.conversation-item.active { background: rgba(0, 0, 0, 0.06); }
 
 /* 置顶区与未置顶区之间的横线分界 */
 .conversation-list__row {
@@ -6631,15 +6632,30 @@ body,
   border: none !important;
   border-radius: 6px !important;
   background: transparent !important;
-  color: #64748b !important;
+  color: #52525b !important;
   cursor: pointer !important;
   position: relative !important;
-  transition: all 120ms ease !important;
+  transition: background 120ms ease, color 120ms ease !important;
+}
+
+.conversation-sidebar__icon-btn svg {
+  stroke-width: 1.6 !important;
 }
 
 .conversation-sidebar__icon-btn:hover {
   background: rgba(0, 0, 0, 0.05) !important;
-  color: #0f172a !important;
+  color: #1d1d1f !important;
+}
+
+[data-theme='dark'] .conversation-sidebar__icon-btn,
+.dark .conversation-sidebar__icon-btn {
+  color: #a1a1aa !important;
+}
+
+[data-theme='dark'] .conversation-sidebar__icon-btn:hover,
+.dark .conversation-sidebar__icon-btn:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
 }
 
 .conversation-sidebar__dot {
@@ -6653,94 +6669,160 @@ body,
 }
 
 .conversation-sidebar__new-section {
-  padding: 2px 8px 8px !important;
+  padding: 2px 8px 6px !important;
 }
 
 /* Codex 风格纯平无边框通栏新建按钮 */
 .new-conversation {
   width: 100% !important;
   height: 30px !important;
+  min-height: 30px !important;
+  max-height: 30px !important;
+  box-sizing: border-box !important;
   display: flex !important;
   align-items: center !important;
   gap: 8px !important;
-  padding: 0 8px !important;
-  border-radius: 6px !important;
+  padding: 5px 8px !important;
+  border-radius: 7px !important;
   border: none !important;
   background: transparent !important;
-  color: #334155 !important;
-  font-size: 13px !important;
-  font-weight: 450 !important;
+  color: #1d1d1f !important;
+  font-size: 13.5px !important;
+  line-height: 20px !important;
+  font-weight: 400 !important;
   cursor: pointer !important;
   box-shadow: none !important;
   transition: background 120ms ease, color 120ms ease !important;
 }
 
 .new-conversation:hover {
-  background: rgba(0, 0, 0, 0.05) !important;
-  color: #0f172a !important;
+  background: rgba(0, 0, 0, 0.035) !important;
+  color: #1d1d1f !important;
 }
 
 .new-conversation__icon {
-  color: #64748b !important;
+  color: #1d1d1f !important;
   flex-shrink: 0 !important;
+}
+
+[data-theme='dark'] .new-conversation,
+.dark .new-conversation {
+  color: #f4f4f5 !important;
+}
+
+[data-theme='dark'] .new-conversation__icon,
+.dark .new-conversation__icon {
+  color: #f4f4f5 !important;
+}
+
+[data-theme='dark'] .new-conversation:hover,
+.dark .new-conversation:hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: #ffffff !important;
 }
 
 .conversation-list {
   flex: 1 !important;
   overflow-y: auto !important;
   padding: 2px 8px 14px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0 !important;
 }
 
 .conversation-group {
-  margin-bottom: 12px !important;
+  margin-top: 18px !important;
+  margin-bottom: 0 !important;
+}
+
+.conversation-group:first-child {
+  margin-top: 4px !important;
 }
 
 .conversation-group__title {
-  padding: 8px 8px 3px !important;
-  font-size: 11px !important;
+  padding: 0 8px !important;
+  margin-bottom: 4px !important;
+  font-size: 12px !important;
+  line-height: 16px !important;
   font-weight: 500 !important;
-  color: #94a3b8 !important;
-  letter-spacing: 0.02em !important;
+  color: #8e8e93 !important;
+  letter-spacing: 0.01em !important;
   user-select: none !important;
 }
 
-/* 单行极简会话条目 */
+[data-theme='dark'] .conversation-group__title,
+.dark .conversation-group__title {
+  color: #a1a1aa !important;
+}
+
+.conversation-group__items {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1px !important;
+}
+
+/* Codex 风格单行紧凑会话条目：严格 height: 30px，消除行间距 */
 .conversation-item {
   position: relative !important;
-  margin: 1px 0 !important;
-  border-radius: 6px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 7px !important;
   background: transparent !important;
   height: 30px !important;
+  min-height: 30px !important;
+  max-height: 30px !important;
+  box-sizing: border-box !important;
   display: flex !important;
   align-items: center !important;
+  border: none !important;
+  box-shadow: none !important;
   transition: background 100ms ease !important;
 }
 
-.conversation-item--indent {
-  padding-left: 14px !important;
-}
-
 .conversation-item:hover {
-  background: rgba(0, 0, 0, 0.04) !important;
+  background: rgba(0, 0, 0, 0.035) !important;
 }
 
+/* 选中态（Active Item）：严格 30px，垂直居中，不加粗 */
 .conversation-item.active {
-  background: rgba(0, 0, 0, 0.065) !important;
+  background: rgba(0, 0, 0, 0.06) !important;
   box-shadow: none !important;
   border: none !important;
 }
 
+[data-theme='dark'] .conversation-item:hover,
+.dark .conversation-item:hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+}
+
+[data-theme='dark'] .conversation-item.active,
+.dark .conversation-item.active {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
 .conversation-item__main {
   width: 100% !important;
-  height: 100% !important;
+  height: 30px !important;
+  min-height: 30px !important;
+  max-height: 30px !important;
+  box-sizing: border-box !important;
   text-align: left !important;
-  padding: 0 8px !important;
+  padding: 5px 8px !important;
   background: transparent !important;
   border: none !important;
   cursor: pointer !important;
   display: flex !important;
   align-items: center !important;
   min-width: 0 !important;
+  line-height: 20px !important;
+  font-size: 13.5px !important;
+  color: #1d1d1f !important;
+  font-weight: 400 !important;
+}
+
+/* 文件夹子项缩进：文字左边缘与父级文件夹标题严格对齐 (padding-left: 32px) */
+.conversation-item--indent .conversation-item__main {
+  padding-left: 32px !important;
 }
 
 .conversation-item__row {
@@ -6749,12 +6831,14 @@ body,
   width: 100% !important;
   min-width: 0 !important;
   gap: 6px !important;
+  line-height: 20px !important;
 }
 
 .conversation-item__title {
-  font-size: 13px !important;
+  font-size: 13.5px !important;
+  line-height: 20px !important;
   font-weight: 400 !important;
-  color: #334155 !important;
+  color: #1d1d1f !important;
   overflow: hidden !important;
   white-space: nowrap !important;
   flex: 1 !important;
@@ -6764,20 +6848,46 @@ body,
   gap: 5px !important;
 }
 
+/* 渐隐遮罩替代省略号：单行不换行，右侧 24px 平滑渐隐至透明 */
 .conversation-item__title-text {
   overflow: hidden !important;
-  text-overflow: ellipsis !important;
+  text-overflow: clip !important;
   white-space: nowrap !important;
   flex: 1 !important;
+  min-width: 0 !important;
+  font-size: 13.5px !important;
+  line-height: 20px !important;
+  font-weight: 400 !important;
+  color: #1d1d1f !important;
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent 100%) !important;
+  mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent 100%) !important;
 }
 
-.conversation-item.active .conversation-item__title {
-  font-weight: 550 !important;
-  color: #0f172a !important;
+/* 选中态保持 400 字重，不加粗 */
+.conversation-item.active .conversation-item__title,
+.conversation-item.active .conversation-item__title-text {
+  font-weight: 400 !important;
+  color: #1d1d1f !important;
+}
+
+[data-theme='dark'] .conversation-item__main,
+[data-theme='dark'] .conversation-item__title,
+[data-theme='dark'] .conversation-item__title-text,
+.dark .conversation-item__main,
+.dark .conversation-item__title,
+.dark .conversation-item__title-text {
+  color: #f4f4f5 !important;
+}
+
+[data-theme='dark'] .conversation-item.active .conversation-item__title,
+[data-theme='dark'] .conversation-item.active .conversation-item__title-text,
+.dark .conversation-item.active .conversation-item__title,
+.dark .conversation-item.active .conversation-item__title-text {
+  color: #ffffff !important;
 }
 
 .conversation-item__pin-icon {
-  color: #94a3b8 !important;
+  color: #8e8e93 !important;
   transform: rotate(45deg) !important;
   flex-shrink: 0 !important;
 }
@@ -6837,10 +6947,10 @@ body,
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  border-radius: 4px !important;
+  border-radius: 5px !important;
   border: none !important;
   background: transparent !important;
-  color: #94a3b8 !important;
+  color: #8e8e93 !important;
   opacity: 0 !important;
   cursor: pointer !important;
   pointer-events: none !important;
@@ -6854,77 +6964,148 @@ body,
 }
 
 .conversation-item__more:hover {
-  background: rgba(0, 0, 0, 0.08) !important;
-  color: #0f172a !important;
+  background: rgba(0, 0, 0, 0.06) !important;
+  color: #1d1d1f !important;
 }
 
+[data-theme='dark'] .conversation-item__more:hover,
+.dark .conversation-item__more:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
+}
+
+/* 项目文件夹节点 */
 .project-node {
-  margin: 1px 0 !important;
+  margin: 0 !important;
 }
 
 .project-node__header {
   width: 100% !important;
-  height: 28px !important;
+  height: 30px !important;
+  min-height: 30px !important;
+  max-height: 30px !important;
+  box-sizing: border-box !important;
   display: flex !important;
   align-items: center !important;
-  gap: 5px !important;
-  padding: 0 8px !important;
-  border-radius: 6px !important;
+  gap: 8px !important;
+  padding: 5px 8px !important;
+  border-radius: 7px !important;
   border: none !important;
   background: transparent !important;
-  color: #334155 !important;
-  font-size: 12.5px !important;
-  font-weight: 500 !important;
+  color: #1d1d1f !important;
+  font-size: 13.5px !important;
+  line-height: 20px !important;
+  font-weight: 400 !important;
   cursor: pointer !important;
-  transition: background 100ms ease !important;
+  text-align: left !important;
+  transition: background 120ms ease !important;
 }
 
 .project-node__header:hover {
-  background: rgba(0, 0, 0, 0.04) !important;
-  color: #0f172a !important;
+  background: rgba(0, 0, 0, 0.035) !important;
+  color: #1d1d1f !important;
 }
 
-.project-node__chevron {
-  color: #94a3b8 !important;
-  flex-shrink: 0 !important;
+[data-theme='dark'] .project-node__header,
+.dark .project-node__header {
+  color: #f4f4f5 !important;
 }
 
-.project-node__folder {
-  color: #64748b !important;
+[data-theme='dark'] .project-node__header:hover,
+.dark .project-node__header:hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: #ffffff !important;
+}
+
+/* 文件夹图标区域：默认显示文件夹图标，Hover 时原地替换为展开/折叠箭头 */
+.project-node__icon-wrap {
+  width: 16px !important;
+  height: 16px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   flex-shrink: 0 !important;
+  color: #52525b !important;
+}
+
+[data-theme='dark'] .project-node__icon-wrap,
+.dark .project-node__icon-wrap {
+  color: #a1a1aa !important;
+}
+
+.project-node__folder-icon {
+  display: inline-flex !important;
+}
+
+.project-node__chevron-icon {
+  display: none !important;
+}
+
+.project-node__header:hover .project-node__folder-icon {
+  display: none !important;
+}
+
+.project-node__header:hover .project-node__chevron-icon {
+  display: inline-flex !important;
 }
 
 .project-node__title {
   flex: 1 !important;
   text-align: left !important;
   overflow: hidden !important;
-  text-overflow: ellipsis !important;
+  text-overflow: clip !important;
   white-space: nowrap !important;
-}
-
-.project-node__count {
-  font-size: 10.5px !important;
-  color: #94a3b8 !important;
+  font-size: 13.5px !important;
+  line-height: 20px !important;
+  font-weight: 400 !important;
+  color: inherit !important;
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent 100%) !important;
+  mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent 100%) !important;
 }
 
 .project-node__children {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1px !important;
   margin-top: 1px !important;
 }
 
+/* 文件夹下超过 5 条时的“展开显示”按钮：padding-left: 32px 严格垂直对齐 */
 .project-node__expand-btn {
   width: 100% !important;
+  height: 30px !important;
+  min-height: 30px !important;
+  max-height: 30px !important;
+  box-sizing: border-box !important;
   text-align: left !important;
-  padding: 4px 8px 4px 28px !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 5px 8px 5px 32px !important;
+  border-radius: 7px !important;
   background: transparent !important;
   border: none !important;
-  font-size: 11px !important;
-  color: #94a3b8 !important;
+  font-size: 13px !important;
+  line-height: 20px !important;
+  font-weight: 400 !important;
+  color: #8e8e93 !important;
   cursor: pointer !important;
-  transition: color 120ms ease !important;
+  transition: background 120ms ease, color 120ms ease !important;
 }
 
 .project-node__expand-btn:hover {
-  color: #475569 !important;
+  background: rgba(0, 0, 0, 0.035) !important;
+  color: #1d1d1f !important;
+}
+
+[data-theme='dark'] .project-node__expand-btn,
+.dark .project-node__expand-btn {
+  color: #a1a1aa !important;
+}
+
+[data-theme='dark'] .project-node__expand-btn:hover,
+.dark .project-node__expand-btn:hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: #ffffff !important;
 }
 
 .workspace-dropdown {

@@ -64,4 +64,62 @@ describe('ConversationList', () => {
     expect(html).toContain('conversation-item__status--completed">✓')
     expect(html).not.toContain('>已完成</span>')
   })
+
+  it('顶部栏细节：通知铃铛在左，全局搜索在右，新聊天按钮展示', () => {
+    const html = renderToStaticMarkup(
+      <ConversationList
+        conversations={[conversation]}
+        selectedId="conv-1"
+        pendingApprovalsCount={2}
+        onSelect={() => {}}
+        onNew={() => {}}
+      />,
+    )
+    // 验证右上角图标顺序：通知（aria-label="通知"）在全局搜索（aria-label="全局搜索"）之前
+    const bellIndex = html.indexOf('aria-label="通知"')
+    const searchIndex = html.indexOf('aria-label="全局搜索"')
+    expect(bellIndex).toBeGreaterThan(-1)
+    expect(searchIndex).toBeGreaterThan(-1)
+    expect(bellIndex).toBeLessThan(searchIndex)
+    // 验证新聊天按钮文案
+    expect(html).toContain('新聊天')
+    expect(html).toContain('conversation-sidebar__dot')
+  })
+
+  it('项目文件夹树形结构：不显示常驻箭头与统计数字，子项缩进，超过5条显示展开按钮', () => {
+    // 构造带项目的会话列表（共 6 个同项目会话）
+    const projectConvs: Conversation[] = Array.from({ length: 6 }, (_, i) => ({
+      ...conversation,
+      id: `p-${i}`,
+      title: `[ProjectX] 任务步骤 ${i + 1}`,
+    }))
+
+    const html = renderToStaticMarkup(
+      <ConversationList
+        conversations={projectConvs}
+        selectedId="p-0"
+        onSelect={() => {}}
+        onNew={() => {}}
+      />,
+    )
+
+    // 验证项目标题与分组标题
+    expect(html).toContain('项目')
+    expect(html).toContain('ProjectX')
+
+    // 验证移除最右侧数量统计（如不再有 project-node__count 包含 "6"）
+    expect(html).not.toContain('project-node__count')
+
+    // 验证文件夹图标容器与原地替换图标
+    expect(html).toContain('project-node__icon-wrap')
+    expect(html).toContain('project-node__folder-icon')
+    expect(html).toContain('project-node__chevron-icon')
+
+    // 验证子项缩进 class
+    expect(html).toContain('conversation-item--indent')
+
+    // 验证超过 5 条时提供“展开显示”按钮
+    expect(html).toContain('project-node__expand-btn')
+    expect(html).toContain('展开显示')
+  })
 })

@@ -350,17 +350,6 @@ export default function ConversationList({
         </div>
 
         <div className="conversation-sidebar__actions">
-          <Tooltip content="全局搜索" shortcut="⌘K" side="bottom">
-            <button
-              type="button"
-              className="conversation-sidebar__icon-btn"
-              onClick={onOpenSearch}
-              aria-label="全局搜索"
-            >
-              <Icon name="search" size={14} />
-            </button>
-          </Tooltip>
-
           <Tooltip
             content={pendingApprovalsCount > 0 ? `${pendingApprovalsCount} 条待审批` : '通知'}
             side="bottom"
@@ -370,10 +359,21 @@ export default function ConversationList({
               className="conversation-sidebar__icon-btn"
               aria-label="通知"
             >
-              <Icon name="bell" size={14} />
+              <Icon name="bell" size={15} strokeWidth={1.6} />
               {pendingApprovalsCount > 0 ? (
                 <span className="conversation-sidebar__dot" />
               ) : null}
+            </button>
+          </Tooltip>
+
+          <Tooltip content="全局搜索" shortcut="⌘K" side="bottom">
+            <button
+              type="button"
+              className="conversation-sidebar__icon-btn"
+              onClick={onOpenSearch}
+              aria-label="全局搜索"
+            >
+              <Icon name="search" size={15} strokeWidth={1.6} />
             </button>
           </Tooltip>
         </div>
@@ -388,7 +388,7 @@ export default function ConversationList({
             onClick={onNew}
             aria-label="新建工作对话"
           >
-            <Icon name="pencil" size={13} className="new-conversation__icon" />
+            <Icon name="squarePen" size={16} strokeWidth={1.6} className="new-conversation__icon" />
             <span className="new-conversation__text">新聊天</span>
           </button>
         </Tooltip>
@@ -427,19 +427,23 @@ export default function ConversationList({
                       type="button"
                       className="project-node__header"
                       onClick={() => toggleProjectCollapse(name)}
+                      aria-expanded={!isCollapsed}
+                      title={name}
                     >
-                      <Icon
-                        name={isCollapsed ? 'chevronRight' : 'chevronDown'}
-                        size={11}
-                        className="project-node__chevron"
-                      />
-                      <Icon
-                        name={isCollapsed ? 'folder' : 'folderOpen'}
-                        size={13}
-                        className="project-node__folder"
-                      />
+                      <span className="project-node__icon-wrap">
+                        <Icon
+                          name={isCollapsed ? 'folder' : 'folderOpen'}
+                          size={16}
+                          className="project-node__folder-icon"
+                        />
+                        <Icon
+                          name={isCollapsed ? 'chevronRight' : 'chevronDown'}
+                          size={16}
+                          strokeWidth={1.6}
+                          className="project-node__chevron-icon"
+                        />
+                      </span>
                       <span className="project-node__title">{name}</span>
-                      <span className="project-node__count">{items.length}</span>
                     </button>
                     {!isCollapsed ? (
                       <div className="project-node__children">

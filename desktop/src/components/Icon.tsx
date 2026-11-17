@@ -35,6 +35,7 @@ import {
   Send,
   Settings,
   ShieldCheck,
+  SquarePen,
   Trash2,
   User,
   Workflow,
@@ -244,6 +245,7 @@ export type IconName =
   | 'more'
   | 'pin'
   | 'pencil'
+  | 'squarePen'
   | 'trash'
   | 'bell'
   | 'search'
@@ -290,6 +292,7 @@ const ICONS: Record<IconName, ComponentType<any>> = {
   more: MoreHorizontal,
   pin: Pin,
   pencil: Pencil,
+  squarePen: SquarePen,
   trash: Trash2,
   bell: Bell,
   search: Search,
