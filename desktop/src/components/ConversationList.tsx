@@ -48,8 +48,14 @@ function relativeTime(iso: string): string {
   return `${days}d`
 }
 
+/** 从文件路径中提取末尾的基础文件夹名或文件名 */
+export function getBaseName(filePath: string): string {
+  const parts = filePath.split(/[/\\]/).filter(Boolean)
+  return parts.at(-1) || filePath
+}
+
 /** 解析会话标题中的项目名（例如 "[vesta] 评估原生 AppKit 重构工作量" 或 "求职网站 / 应用 Notion"） */
-function extractProjectAndTitle(rawTitle: string): { project: string | null; cleanTitle: string } {
+export function extractProjectAndTitle(rawTitle: string): { project: string | null; cleanTitle: string } {
   const title = rawTitle.trim()
   const bracketMatch = title.match(/^\[(.*?)\]\s*(.*)$/)
   if (bracketMatch) {
@@ -60,6 +66,48 @@ function extractProjectAndTitle(rawTitle: string): { project: string | null; cle
     return { project: slashMatch[1].trim(), cleanTitle: slashMatch[2].trim() }
   }
   return { project: null, cleanTitle: title }
+}
+
+/**
+ * 综合解析会话归属项目与展示标题：
+ * 1. 优先使用会话绑定的 workspace_path（以工作区目录名作为项目分类）；
+ * 2. 兼容标题前缀 [项目名] 或 项目 / 标题；
+ * 3. 若皆无则归为普通对话（显示在“最近”列表中）。
+ */
+export function resolveConversationProject(conv: Conversation): {
+  projectKey: string | null
+  projectName: string | null
+  projectPath: string | null
+  cleanTitle: string
+} {
+  const { project: titleProject, cleanTitle } = extractProjectAndTitle(conv.title || '')
+  const workspacePath = conv.workspace_path?.trim()
+
+  if (workspacePath) {
+    const baseName = getBaseName(workspacePath)
+    return {
+      projectKey: workspacePath,
+      projectName: baseName,
+      projectPath: workspacePath,
+      cleanTitle,
+    }
+  }
+
+  if (titleProject) {
+    return {
+      projectKey: titleProject,
+      projectName: titleProject,
+      projectPath: null,
+      cleanTitle,
+    }
+  }
+
+  return {
+    projectKey: null,
+    projectName: null,
+    projectPath: null,
+    cleanTitle,
+  }
 }
 
 export default function ConversationList({
@@ -129,19 +177,21 @@ export default function ConversationList({
     })
   }
 
-  const toggleProjectCollapse = (projectName: string): void => {
+  const toggleProjectCollapse = (projectKey: string, projectName?: string): void => {
     setCollapsedProjects((prev) => {
-      const next = prev.includes(projectName)
-        ? prev.filter((p) => p !== projectName)
-        : [...prev, projectName]
+      const isCurrentlyCollapsed =
+        prev.includes(projectKey) || (projectName ? prev.includes(projectName) : false)
+      const next = isCurrentlyCollapsed
+        ? prev.filter((p) => p !== projectKey && p !== projectName)
+        : [...prev, projectKey]
       saveToStorage(COLLAPSED_PROJECTS_KEY, next)
       return next
     })
   }
 
-  const toggleProjectShowAll = (projectName: string): void => {
+  const toggleProjectShowAll = (projectKey: string): void => {
     setExpandedProjectsAll((prev) =>
-      prev.includes(projectName) ? prev.filter((p) => p !== projectName) : [...prev, projectName],
+      prev.includes(projectKey) ? prev.filter((p) => p !== projectKey) : [...prev, projectKey],
     )
   }
 
@@ -166,19 +216,30 @@ export default function ConversationList({
   // 分类与项目树计算
   const { pinnedItems, projectGroups, recentItems } = useMemo(() => {
     const pinnedList: Conversation[] = []
-    const projectMap = new Map<string, Conversation[]>()
+    const projectMap = new Map<
+      string,
+      {
+        name: string
+        path: string | null
+        items: Conversation[]
+      }
+    >()
     const recentList: Conversation[] = []
 
     for (const conv of conversations) {
       if (pinned.includes(conv.id)) {
         pinnedList.push(conv)
       } else {
-        const { project } = extractProjectAndTitle(conv.title || '')
-        if (project) {
-          if (!projectMap.has(project)) {
-            projectMap.set(project, [])
+        const { projectKey, projectName, projectPath } = resolveConversationProject(conv)
+        if (projectKey && projectName) {
+          if (!projectMap.has(projectKey)) {
+            projectMap.set(projectKey, {
+              name: projectName,
+              path: projectPath,
+              items: [],
+            })
           }
-          projectMap.get(project)!.push(conv)
+          projectMap.get(projectKey)!.items.push(conv)
         } else {
           recentList.push(conv)
         }
@@ -187,13 +248,37 @@ export default function ConversationList({
 
     return {
       pinnedItems: pinnedList,
-      projectGroups: Array.from(projectMap.entries()).map(([name, items]) => ({
-        name,
-        items,
-      })),
-      recentItems: recentList,
+      projectGroups: Array.from(projectMap.entries())
+        .map(([key, group]) => ({
+          key,
+          name: group.name,
+          path: group.path,
+          items: group.items.sort((a, b) => (b.updated_at || '').localeCompare(a.updated_at || '')),
+        }))
+        .sort((a, b) => {
+          const latestA = a.items[0]?.updated_at || ''
+          const latestB = b.items[0]?.updated_at || ''
+          return latestB.localeCompare(latestA)
+        }),
+      recentItems: recentList.sort((a, b) => (b.updated_at || '').localeCompare(a.updated_at || '')),
     }
   }, [conversations, pinned])
+
+  // 当当前选中的会话位于折叠的项目内时，自动展开该项目以确保选中高亮可见
+  useEffect(() => {
+    if (!selectedId) return
+    const activeGroup = projectGroups.find((g) => g.items.some((c) => c.id === selectedId))
+    if (!activeGroup) return
+    const isCurrentlyCollapsed =
+      collapsedProjects.includes(activeGroup.key) || collapsedProjects.includes(activeGroup.name)
+    if (isCurrentlyCollapsed) {
+      setCollapsedProjects((prev) => {
+        const next = prev.filter((k) => k !== activeGroup.key && k !== activeGroup.name)
+        saveToStorage(COLLAPSED_PROJECTS_KEY, next)
+        return next
+      })
+    }
+  }, [selectedId, projectGroups, collapsedProjects])
 
   const renderConversationItem = (
     conv: Conversation,
@@ -204,7 +289,7 @@ export default function ConversationList({
     const activity = activityByConversation[conv.id]
     const isPinned = pinned.includes(conv.id)
     const isSelected = selectedId === conv.id
-    const { cleanTitle } = extractProjectAndTitle(conv.title || '')
+    const { cleanTitle } = resolveConversationProject(conv)
     const timeFormatted = relativeTime(conv.updated_at)
     const itemTooltip = timeFormatted ? `${cleanTitle} • ${timeFormatted}` : cleanTitle
 
@@ -424,20 +509,21 @@ export default function ConversationList({
           <div className="conversation-group">
             <div className="conversation-group__title">项目</div>
             <div className="conversation-group__items">
-              {projectGroups.map(({ name, items }) => {
-                const isCollapsed = collapsedProjects.includes(name)
-                const showAll = expandedProjectsAll.includes(name)
+              {projectGroups.map(({ key, name, path, items }) => {
+                const isCollapsed =
+                  collapsedProjects.includes(key) || collapsedProjects.includes(name)
+                const showAll = expandedProjectsAll.includes(key) || expandedProjectsAll.includes(name)
                 const visibleItems = showAll ? items : items.slice(0, 6)
                 const hasMore = items.length > 6
 
                 return (
-                  <div key={name} className="project-node">
+                  <div key={key} className="project-node">
                     <button
                       type="button"
                       className="project-node__header"
-                      onClick={() => toggleProjectCollapse(name)}
+                      onClick={() => toggleProjectCollapse(key, name)}
                       aria-expanded={!isCollapsed}
-                      title={name}
+                      title={path ? `${name} (${path})` : name}
                     >
                       <span className="project-node__icon-wrap">
                         <Icon
@@ -466,7 +552,7 @@ export default function ConversationList({
                           <button
                             type="button"
                             className="project-node__expand-btn"
-                            onClick={() => toggleProjectShowAll(name)}
+                            onClick={() => toggleProjectShowAll(key)}
                           >
                             {showAll ? 'Collapse' : `See all (${items.length})`}
                           </button>

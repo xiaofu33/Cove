@@ -123,4 +123,60 @@ describe('ConversationList', () => {
     expect(html).toContain('project-node__expand-btn')
     expect(html).toContain('See all (7)')
   })
+
+  it('按工作区路径（workspace_path）自动归入项目分组，普通对话归入最近分组', () => {
+    const mixedConvs: Conversation[] = [
+      {
+        ...conversation,
+        id: 'conv-backend-1',
+        title: '排查 WebSocket 断线重连',
+        workspace_path: '/Users/yumixiaofu/code/ai/vesta/backend',
+        updated_at: '2026-11-17T10:00:00Z',
+      },
+      {
+        ...conversation,
+        id: 'conv-desktop-1',
+        title: '调整侧边栏分组',
+        workspace_path: '/Users/yumixiaofu/code/ai/vesta/desktop',
+        updated_at: '2026-11-17T09:00:00Z',
+      },
+      {
+        ...conversation,
+        id: 'conv-normal-1',
+        title: '安排本周学习计划',
+        workspace_path: null,
+        updated_at: '2026-11-17T08:00:00Z',
+      },
+      {
+        ...conversation,
+        id: 'conv-normal-2',
+        title: '理解二分查找边界',
+        workspace_path: '',
+        updated_at: '2026-11-17T07:00:00Z',
+      },
+    ]
+
+    const html = renderToStaticMarkup(
+      <ConversationList
+        conversations={mixedConvs}
+        selectedId="conv-backend-1"
+        onSelect={() => {}}
+        onNew={() => {}}
+      />,
+    )
+
+    // 1. 验证存在“项目”与“最近”两级分组
+    expect(html).toContain('项目')
+    expect(html).toContain('最近')
+
+    // 2. 验证从路径提取的 backend 和 desktop 项目名称
+    expect(html).toContain('backend')
+    expect(html).toContain('desktop')
+    expect(html).toContain('排查 WebSocket 断线重连')
+    expect(html).toContain('调整侧边栏分组')
+
+    // 3. 验证无工作区的会话在普通对话/最近列表中
+    expect(html).toContain('安排本周学习计划')
+    expect(html).toContain('理解二分查找边界')
+  })
 })
