@@ -13,13 +13,17 @@ import {
 } from '../api/conversations'
 import { cancelRun, interruptRun, listRuns, recoverRun } from '../api/runs'
 import { getTask, listTasks, planAccept, planReject } from '../api/tasks'
+import {
+  getModelSettings,
+  updateModelSettings,
+  type ModelProvider,
+} from '../api/modelSettings'
 import type { AgentMode, Message, Task } from '../api/types'
 import { latestRunId } from '../agent/runAnalysis'
 import { buildTurnView } from '../agent/turnPresentation'
 import { chatShouldShowApproval } from '../approval/computerApproval'
 import ApprovalCard from '../components/ApprovalCard'
 import ChatEmptyState from '../components/ChatEmptyState'
-import RunStatusBar from '../components/RunStatusBar'
 import Composer from '../components/Composer'
 import type { ComposerCommand } from '../components/Composer'
 import ConversationList from '../components/ConversationList'
@@ -40,12 +44,16 @@ export default function ChatPage({
   initialConversationId,
   onConversationChange,
   sidebarCollapsed,
+  inspectorOpen,
+  onToggleInspector,
 }: {
   onNavigate?: (page: PageKey) => void
   onOpenRun?: (runId: string) => void
   initialConversationId?: string | null
   onConversationChange?: (conversationId: string | null) => void
   sidebarCollapsed?: boolean
+  inspectorOpen?: boolean
+  onToggleInspector?: () => void
 }): React.JSX.Element {
   const queryClient = useQueryClient()
   const eventsByRun = useEventsStore((state) => state.eventsByRun)
@@ -113,7 +121,15 @@ export default function ChatPage({
       // ignore
     }
   }, [])
-  const [runInspectorOpen, setRunInspectorOpen] = useState(false)
+  const [internalInspectorOpen, setInternalInspectorOpen] = useState(false)
+  const isInspectorOpen = inspectorOpen !== undefined ? inspectorOpen : internalInspectorOpen
+  const setInspectorState = (nextOpen: boolean): void => {
+    if (inspectorOpen !== undefined) {
+      if (inspectorOpen !== nextOpen) onToggleInspector?.()
+    } else {
+      setInternalInspectorOpen(nextOpen)
+    }
+  }
   const [planTask, setPlanTask] = useState<Task | null>(null)
 
   useEffect(() => {
@@ -261,6 +277,36 @@ export default function ChatPage({
   })
   const artifacts = artifactsQuery.data ?? []
 
+  const modelSettingsQuery = useQuery({
+    queryKey: ['model-settings'],
+    queryFn: getModelSettings,
+    refetchInterval: 10000,
+  })
+
+  const switchModelMutation = useMutation({
+    mutationFn: async (provider: ModelProvider) => {
+      const current = modelSettingsQuery.data
+      if (!current) return
+      return updateModelSettings({
+        default_provider: provider,
+        providers: current.providers.map((p) => ({
+          provider: p.provider,
+          model: p.model,
+          base_url: p.base_url,
+          api_style: p.api_style,
+        })),
+        reflection: current.reflection,
+        maintenance: current.maintenance,
+        summary: current.summary,
+      })
+    },
+    onSuccess: (data) => {
+      if (data) {
+        queryClient.setQueryData(['model-settings'], data)
+      }
+    },
+  })
+
   const resolveApprovalMutation = useMutation({
     mutationFn: (action: { id: string; decision: 'approve' | 'deny' }) =>
       action.decision === 'approve'
@@ -306,7 +352,7 @@ export default function ChatPage({
         setPlanTask(null)
         setPlanResolved(null)
         setLiveTurnActive(false)
-        setRunInspectorOpen(false)
+        setInspectorState(false)
       }
       void queryClient.invalidateQueries({ queryKey: ['conversations'] })
       void queryClient.invalidateQueries({ queryKey: ['conversation', id] })
@@ -474,7 +520,6 @@ export default function ChatPage({
     showAgentTurn && messages.at(-1)?.role === 'assistant'
       ? messages.slice(0, -1)
       : messages
-  const selectedConversation = conversations.find((item) => item.id === selectedId)
   const showNewConversationHome = selectedId !== null && messages.length === 0
   const progressRunId = activeRunId
   const activeEvents = progressRunId ? (eventsByRun[progressRunId] ?? []) : []
@@ -482,16 +527,6 @@ export default function ChatPage({
     .reverse()
     .find((event) => event.type === 'model_started')?.step
   // 流式正文/思考由 LiveAgentTurn 内部按 run+step 细粒度订阅，ChatPage 不参与高频渲染。
-
-  // Run Status Bar 数据：当前最重要的执行状态 + 统计。
-  const turnView = buildTurnView(activeEvents, { now: Date.now() })
-  const currentAction = turnView.currentAction
-  const startedEvent = activeEvents.find((event) => event.type === 'agent_started')
-  const startedAt = startedEvent ? Date.parse(startedEvent.event_time) : null
-  const failedEvent = [...activeEvents]
-    .reverse()
-    .find((event) => event.type === 'agent_failed')
-  const stopReason = failedEvent?.stop_reason ?? null
 
   // 流式揭示：已删除二次打字机（revealedText / setInterval / STREAM_TICK_MS / CHARS_PER_TICK）。
   // Provider delta 由 events store 短时 batching（~33ms flush）批量提交，
@@ -577,7 +612,7 @@ export default function ChatPage({
             setLastRunId(null)
             setPlanTask(null)
             setPlanResolved(null)
-            setRunInspectorOpen(false)
+            setInspectorState(false)
             setLiveTurnActive(false)
           }}
           onNew={() => newConversationMutation.mutate()}
@@ -592,30 +627,13 @@ export default function ChatPage({
             title="双击恢复默认宽度，拖拽调节大小"
             role="separator"
             aria-orientation="vertical"
-          />
+          >
+            <span className="conversation-sidebar__resizer-handle" aria-hidden="true" />
+          </div>
         )}
       </aside>
 
       <div className="chat-right">
-        <RunStatusBar
-          title={selectedConversation?.title || '新会话'}
-          conversationSidebarOpen={conversationSidebarOpen}
-          onToggleConversationSidebar={() => setConversationSidebarOpen((open) => !open)}
-          runStatus={activeRunStatus}
-          step={latestModelStep ?? turnView.steps}
-          toolCount={turnView.toolCount}
-          totalTokens={turnView.usage?.totalTokens ?? null}
-          durationMs={turnView.durationMs}
-          startedAt={startedAt}
-          currentAction={currentAction}
-          stopReason={stopReason}
-          mode={mode}
-          turnState={activeEvents.length > 0 ? turnView.status : undefined}
-          activityOpen={runInspectorOpen}
-          onToggleActivity={() => setRunInspectorOpen((open) => !open)}
-          onStop={() => void stopRun()}
-          onRecover={() => void recoverRunAction()}
-        />
         <CurrentTaskPanel tasks={conversationTasks} />
         <div className="chat-right__body">
           <main className="conversation-main">
@@ -651,7 +669,7 @@ export default function ChatPage({
                 step={latestModelStep ?? null}
                 events={activeEvents}
                 onRecover={() => void recoverRunAction()}
-                onInspect={() => setRunInspectorOpen(true)}
+                onInspect={() => setInspectorState(true)}
               />
             ) : null}
 
@@ -695,6 +713,8 @@ export default function ChatPage({
           </div>
         </div>
 
+        <div className="chat-bottom-mask" aria-hidden="true" />
+
         {!isAtBottom && (
           <button
             type="button"
@@ -708,9 +728,10 @@ export default function ChatPage({
               }
             }}
             aria-label="回到最新"
+            title="回到最新"
           >
-            <Icon name="chevronDown" size={13} />
-            <span>回到最新</span>
+            <Icon name="arrowDown" size={14} />
+            <span className="sr-only">回到最新</span>
           </button>
         )}
 
@@ -721,9 +742,13 @@ export default function ChatPage({
           onStop={() => void pauseRun()}
           mode={mode}
           onModeChange={setMode}
+          modelSettings={modelSettingsQuery.data}
+          onModelChange={(p) => switchModelMutation.mutate(p)}
           value={draft}
           onValueChange={setDraft}
           commands={composerCommands}
+          hasMessages={displayMessages.length > 0}
+          messagesCount={displayMessages.length}
           onSend={async (content) => {
             if (!selectedId) return
             setSendError(null)
@@ -746,12 +771,12 @@ export default function ChatPage({
           }}
           />
           </main>
-          {runInspectorOpen ? (
+          {isInspectorOpen ? (
             <div className="chat-panels">
               <div className="activity-drawer">
                 <RunActivity
                   runId={activeRunId}
-                  onClose={() => setRunInspectorOpen(false)}
+                  onClose={() => setInspectorState(false)}
                   onStop={() => void stopRun()}
                   onRecover={() => void recoverRunAction()}
                   onOpenFullDetail={onOpenRun}

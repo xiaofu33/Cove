@@ -1,4 +1,4 @@
-/** Composer：输入面板、模式与发送状态测试。 */
+/** Composer：输入面板、双层底座、新对话项目/工作树顶栏、模式与发送状态测试。 */
 
 import { describe, expect, it } from 'vitest'
 import { renderToStaticMarkup } from 'react-dom/server'
@@ -6,15 +6,44 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import Composer from './Composer'
 
 describe('Composer', () => {
-  it('渲染工作指令占位符、Normal / Plan 模式和发送按钮', () => {
+  it('渲染中文任务指令占位符、Direct / Plan 模式和发送按钮', () => {
     const html = renderToStaticMarkup(
       <Composer disabled={false} mode="normal" onModeChange={() => {}} onSend={async () => {}} />,
     )
-    expect(html).toContain('告诉 Vesta 你想完成什么')
-    expect(html).toContain('普通')
-    expect(html).toContain('规划')
+    expect(html).toContain('输入任务指令，@ 引用文件，/ 调用命令')
+    expect(html).toContain('Direct')
+    expect(html).toContain('Plan')
     expect(html).toContain('aria-label="发送"')
     expect(html).toContain('aria-pressed="true"')
+  })
+
+  it('新对话未发送消息时（messages.length === 0）渲染双层浅灰底座与「项目 + 工作树」顶栏', () => {
+    const html = renderToStaticMarkup(
+      <Composer
+        disabled={false}
+        hasMessages={false}
+        onSend={async () => {}}
+      />,
+    )
+    expect(html).toContain('composer-outer-ring--new')
+    expect(html).toContain('composer__meta-bar')
+    expect(html).toContain('cove-desktop')
+    expect(html).toContain('composer__top-worktree-name')
+    expect(html).toContain('main')
+    expect(html).toContain('composer-inner-box--new')
+  })
+
+  it('已发送消息后（messages.length > 0）自动收起外层底座并隐藏顶部选择栏', () => {
+    const html = renderToStaticMarkup(
+      <Composer
+        disabled={false}
+        hasMessages={true}
+        onSend={async () => {}}
+      />,
+    )
+    expect(html).toContain('composer-outer-ring--chat')
+    expect(html).not.toContain('composer__meta-bar')
+    expect(html).toContain('composer-inner-box--chat')
   })
 
   it('Plan 模式可见且有草稿时发送按钮可用', () => {
@@ -78,5 +107,64 @@ describe('Composer', () => {
     )
     expect(html).toContain('aria-label="消息输入框"')
     expect(html).toContain('rows="1"')
+  })
+
+  it('本地适配：默认展示本地 Provider 模型（Qwen Plus）与英文模式标签（Direct），且无模式图标', () => {
+    const html = renderToStaticMarkup(
+      <Composer disabled={false} mode="normal" onSend={async () => {}} />,
+    )
+    expect(html).toContain('Qwen')
+    expect(html).toContain('Plus')
+    expect(html).toContain('Direct')
+    expect(html).not.toContain('composer__mode-shield')
+  })
+
+  it('本地适配：Plan 模式展示纯英文 Plan 标签且无图标', () => {
+    const html = renderToStaticMarkup(
+      <Composer disabled={false} mode="plan" onSend={async () => {}} />,
+    )
+    expect(html).toContain('Plan')
+    expect(html).not.toContain('composer__mode-shield')
+  })
+
+  it('本地适配：传入 modelSettings 时正确响应激活的本地 Provider', () => {
+    const mockModelSettings = {
+      default_provider: 'deepseek' as const,
+      active_provider: 'deepseek',
+      active_model: 'deepseek-chat',
+      providers: [
+        {
+          provider: 'deepseek' as const,
+          label: 'DeepSeek',
+          model: 'deepseek-chat',
+          base_url: null,
+          api_style: 'chat_completions' as const,
+          configured: true,
+          key_source: 'environment' as const,
+        },
+      ],
+      reflection: { enabled: true, inherit_main: true, provider: null, model: null },
+      maintenance: { enabled: false, inherit_main: true, provider: null, model: null },
+      summary: { enabled: true, inherit_main: false, provider: 'deepseek' as const, model: 'deepseek-chat' },
+      active_roles: {
+        main: { enabled: true, provider: 'deepseek', model: 'deepseek-chat' },
+        summary: { enabled: true, provider: 'deepseek', model: 'deepseek-chat' },
+        reflection: { enabled: true, provider: 'deepseek', model: 'deepseek-chat' },
+        maintenance: { enabled: false, provider: null, model: null },
+      },
+      restart_required: false,
+      restart_supported: true,
+      restart_blocked_by_run_ids: [],
+      can_restart: true,
+    }
+    const html = renderToStaticMarkup(
+      <Composer
+        disabled={false}
+        modelSettings={mockModelSettings}
+        onSend={async () => {}}
+      />,
+    )
+    expect(html).toContain('DeepSeek')
+    expect(html).toContain('V3')
   })
 })

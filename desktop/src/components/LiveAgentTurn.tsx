@@ -1,14 +1,19 @@
 /** Persistent AgentTurn：同一组件承载实时执行与完成后的 Work Record。 */
 
+import { useMemo } from 'react'
 import type { AgentEvent } from '../api/types'
 import {
   buildTurnView,
   formatCacheHitRate,
   formatDuration,
   formatTokens,
+  type ToolStepVM,
 } from '../agent/turnPresentation'
 import { useEventsStore } from '../stores/events'
 import { AssistantContent } from './AssistantContent'
+import AssistantReasoning from './AssistantReasoning'
+import FileDiffCard from './FileDiffCard'
+import TerminalCommandCard from './TerminalCommandCard'
 
 const STATUS = {
   thinking: { label: '正在思考', tone: 'working' },
@@ -20,6 +25,60 @@ const STATUS = {
   interrupted: { label: '已中断', tone: 'failed' },
   cancelled: { label: '已取消', tone: 'cancelled' },
 } as const
+
+/** 从 ToolStepVM 解析出文件修改或终端命令卡片 */
+function renderToolCard(tool: ToolStepVM): React.JSX.Element | null {
+  const isFileTool = ['write_file', 'edit_file', 'patch_file', 'create_file'].includes(tool.name)
+  const isTerminalTool = ['run_shell_command', 'run_command', 'bash', 'terminal'].includes(tool.name)
+
+  if (isFileTool) {
+    let path = 'file'
+    let diffContent: string | undefined
+    try {
+      const parsed = JSON.parse(tool.details)
+      path = parsed.path || parsed.Path || parsed.file || parsed.filename || path
+      diffContent = parsed.diff || parsed.content || parsed.patch || parsed.Replacement
+    } catch {
+      /* 忽略解析错误 */
+    }
+    const action = tool.name === 'create_file' ? '已创建' : tool.name === 'write_file' ? '已写入' : '已编辑'
+    return (
+      <FileDiffCard
+        key={tool.id}
+        path={path}
+        action={action}
+        diff={diffContent}
+      />
+    )
+  }
+
+  if (isTerminalTool) {
+    let command = 'command'
+    try {
+      const parsed = JSON.parse(tool.details)
+      command = parsed.command || parsed.CommandLine || parsed.cmd || command
+    } catch {
+      /* 忽略解析错误 */
+    }
+    const status =
+      tool.state === 'active' || tool.state === 'waiting'
+        ? 'running'
+        : tool.state === 'done'
+          ? 'completed'
+          : 'failed'
+    return (
+      <TerminalCommandCard
+        key={tool.id}
+        command={command}
+        status={status}
+        durationMs={tool.durationMs}
+        output={tool.resultDetails}
+      />
+    )
+  }
+
+  return null
+}
 
 export default function LiveAgentTurn({
   runId,
@@ -43,12 +102,23 @@ export default function LiveAgentTurn({
       ? (state.streamTextByRun[runId]?.[step] ?? '')
       : '',
   )
+  const liveReasoning = useEventsStore((state) =>
+    runId && step !== null && step !== undefined
+      ? (state.reasoningByRun[runId]?.[step] ?? '')
+      : '',
+  )
   const view = buildTurnView(events, { now: Date.now() })
   const status = STATUS[view.status]
   const terminal = ['completed', 'failed', 'interrupted', 'cancelled'].includes(
     view.status,
   )
   const text = streamText !== undefined ? streamText : liveText || view.finalText
+
+  const toolCards = useMemo(() => {
+    return view.tools
+      .map((tool) => renderToolCard(tool))
+      .filter((card): card is React.JSX.Element => card !== null)
+  }, [view.tools])
 
   return (
     <section
@@ -71,6 +141,36 @@ export default function LiveAgentTurn({
           </span>
         ) : null}
       </header>
+
+      {/* 顶部思考/执行耗时栏：渲染为单行无边框纯文本 Worked for ... › */}
+      {view.durationMs !== null ? (
+        <div
+          className="agent-turn__worked-summary"
+          onClick={onInspect}
+          role={onInspect ? 'button' : undefined}
+          tabIndex={onInspect ? 0 : undefined}
+        >
+          Worked for {formatDuration(view.durationMs)} ›
+        </div>
+      ) : null}
+
+      {/* 思考过程折叠栏：仅当存在流式思考且不为空时内联呈现 */}
+      {liveReasoning ? (
+        <div className="agent-turn__reasoning">
+          <AssistantReasoning
+            text={liveReasoning}
+            busy={!terminal && !text}
+            durationMs={view.durationMs}
+          />
+        </div>
+      ) : null}
+
+      {/* 工具卡片流：文件修改与终端命令卡片组 */}
+      {toolCards.length > 0 ? (
+        <div className="tool-cards-group">
+          {toolCards}
+        </div>
+      ) : null}
 
       {view.error ? (
         <div className="agent-turn__error">

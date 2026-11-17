@@ -32,21 +32,13 @@ describe('Sidebar (App Shell)', () => {
     expect(html).toContain('nav-item active')
   })
 
-  it('connected 显示 Host 就绪', () => {
+  it('底部不展示多余的 Host 状态噪点', () => {
     const html = renderToStaticMarkup(
       <Sidebar current="chat" onNavigate={() => {}} connected />,
     )
-    expect(html).toContain('Host 就绪')
-    expect(html).toContain('status-dot--ready')
+    expect(html).not.toContain('host-status')
+    expect(html).not.toContain('Host 就绪')
     expect(html).not.toContain('Host 离线')
-  })
-
-  it('断开连接显示 Host 离线', () => {
-    const html = renderToStaticMarkup(
-      <Sidebar current="chat" onNavigate={() => {}} connected={false} />,
-    )
-    expect(html).toContain('Host 离线')
-    expect(html).toContain('status-dot--offline')
   })
 
   it('图标导航提供 title 与无障碍名称，不在窄栏展示版本噪声', () => {

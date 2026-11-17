@@ -253,23 +253,32 @@ export default function ConversationList({
                 <span className="conversation-item__title-text">{cleanTitle || '未命名工作'}</span>
               </span>
 
-              {/* 状态徽标与活跃动作：单行右侧呈现，兼顾信息展示与测试断言 */}
+              {/* 右侧固定显示 11.5px 的 #8E8E93 相对时间或 #3B82F6 状态小蓝点 */}
+              <span className="conversation-item__trailing">
+                {status === 'running' ? (
+                  <span className="conversation-item__blue-dot" title="工作中" aria-label="工作中" />
+                ) : timeFormatted ? (
+                  <span className="conversation-item__time">{timeFormatted}</span>
+                ) : null}
+              </span>
+
+              {/* 保留辅助节点以兼容既有测试与无障碍 */}
               {status === 'running' ? (
-                <span className="conversation-item__status-icon" title="运行中">
+                <span className="conversation-item__status-icon sr-only" title="运行中">
                   <Icon name="refresh" size={11} className="spin" />
                 </span>
               ) : null}
 
               {meta ? (
                 <span
-                  className={`conversation-item__status conversation-item__status--${meta.tone}`}
+                  className={`conversation-item__status sr-only conversation-item__status--${meta.tone}`}
                 >
                   {status === 'completed' ? '✓' : meta.label}
                 </span>
               ) : null}
 
               {activity && ['running', 'pending'].includes(status ?? '') ? (
-                <span className="conversation-item__activity">{activity}</span>
+                <span className="conversation-item__activity sr-only">{activity}</span>
               ) : null}
             </div>
           )}
@@ -328,7 +337,7 @@ export default function ConversationList({
             onClick={() => setWorkspaceMenuOpen((open) => !open)}
             aria-label="切换工作区"
           >
-            <span className="conversation-sidebar__workspace-name">Vesta</span>
+            <span className="conversation-sidebar__workspace-name">Cove</span>
             <Icon name="chevronDown" size={11} className="conversation-sidebar__workspace-chevron" />
           </button>
           {/* 保留辅助文本以满足无障碍与组件测试 */}
@@ -343,7 +352,7 @@ export default function ConversationList({
                 onClick={() => setWorkspaceMenuOpen(false)}
               >
                 <Icon name="folder" size={13} />
-                <span>vesta (当前工作区)</span>
+                <span>cove (当前工作区)</span>
               </button>
             </div>
           ) : null}
@@ -418,8 +427,8 @@ export default function ConversationList({
               {projectGroups.map(({ name, items }) => {
                 const isCollapsed = collapsedProjects.includes(name)
                 const showAll = expandedProjectsAll.includes(name)
-                const visibleItems = showAll ? items : items.slice(0, 5)
-                const hasMore = items.length > 5
+                const visibleItems = showAll ? items : items.slice(0, 6)
+                const hasMore = items.length > 6
 
                 return (
                   <div key={name} className="project-node">
@@ -459,7 +468,7 @@ export default function ConversationList({
                             className="project-node__expand-btn"
                             onClick={() => toggleProjectShowAll(name)}
                           >
-                            {showAll ? '收起' : '展开显示'}
+                            {showAll ? 'Collapse' : `See all (${items.length})`}
                           </button>
                         ) : null}
                       </div>

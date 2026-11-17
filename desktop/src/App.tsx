@@ -6,6 +6,7 @@ import { listArtifacts } from './api/artifacts'
 import { getComputerStatus } from './api/computer'
 import { getConversation } from './api/conversations'
 import { useEventsStore } from './stores/events'
+import { useWorkspaceStore } from './stores/workspace'
 import { createDesktopNotificationController } from './notifications/desktop'
 import Sidebar from './components/Sidebar'
 import { ToastViewport } from './components/ToastViewport'
@@ -67,6 +68,8 @@ export default function App(): React.JSX.Element {
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null)
   const [everConnected, setEverConnected] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [chatInspectorOpen, setChatInspectorOpen] = useState(false)
+  const currentProject = useWorkspaceStore((state) => state.currentProject)
 
   // 会话历史导航栈（支持后退/前进）
   const [history, setHistory] = useState<string[]>([])
@@ -258,41 +261,33 @@ export default function App(): React.JSX.Element {
               className="window-toolbar__session-icon"
             />
             <span className="window-toolbar__session-title window-toolbar__page-title">{currentTitle}</span>
+            {page === 'chat' && currentProject && (
+              <span
+                className="window-toolbar__project-badge"
+                title={`当前工作区项目：${currentProject.name} (${currentProject.path})`}
+              >
+                <Icon name="folder" size={11} />
+                <span>{currentProject.name}</span>
+              </span>
+            )}
             {page === 'runs' && selectedRunId && (
               <span className="window-toolbar__subtitle">/ 详情</span>
             )}
           </div>
         </div>
 
-        {/* 顶部右侧：任务运行状态、Host 就绪指示与设置 */}
+        {/* 顶部右侧：详情入口（右上角设置已移除，统一由左侧栏左下角提供） */}
         <div className="window-toolbar__right">
-          {runningCount > 0 && (
-            <div
-              className="window-toolbar__status-capsule window-toolbar__status-capsule--running"
-              title={`${runningCount} 个任务执行中`}
-            >
-              <span className="window-toolbar__status-dot pulse" />
-              <span>{runningCount} 正在运行</span>
-            </div>
-          )}
-          <div
-            className={`window-toolbar__status-capsule ${connected ? 'window-toolbar__status-capsule--connected' : 'window-toolbar__status-capsule--offline'}`}
-            title={connected ? 'Host 服务已连接' : 'Host 服务离线中'}
-          >
-            <span
-              className={`window-toolbar__status-dot ${connected ? 'window-toolbar__status-dot--ready' : 'window-toolbar__status-dot--offline'}`}
-            />
-            <span>{connected ? 'Host 就绪' : 'Host 离线'}</span>
-          </div>
-          {page !== 'settings' && (
+          {page === 'chat' && (
             <button
               type="button"
-              className="window-toolbar__btn"
-              onClick={() => navigate('settings')}
-              title="设置 (⌘,)"
-              aria-label="打开设置"
+              className={`window-toolbar__btn window-toolbar__btn--detail ${chatInspectorOpen ? 'active' : ''}`}
+              onClick={() => setChatInspectorOpen((prev) => !prev)}
+              title="运行详情、上下文与执行轨迹"
+              aria-label="详情"
             >
-              <Icon name="settings" size={14} />
+              <Icon name="activity" size={14} />
+              <span>详情</span>
             </button>
           )}
         </div>
@@ -329,6 +324,8 @@ export default function App(): React.JSX.Element {
               initialConversationId={selectedConversationId}
               onConversationChange={setSelectedConversationId}
               sidebarCollapsed={sidebarCollapsed}
+              inspectorOpen={chatInspectorOpen}
+              onToggleInspector={() => setChatInspectorOpen((prev) => !prev)}
             />
           )}
           {page === 'runs' &&

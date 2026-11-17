@@ -4,7 +4,9 @@ import {
   Activity,
   AlertCircle,
   Archive,
+  ArrowDown,
   AtSign,
+  AudioLines,
   Bell,
   BookOpen,
   Bot,
@@ -15,15 +17,18 @@ import {
   Clock,
   Clock3,
   Code2,
+  Copy,
   Download,
   ExternalLink,
   FileText,
   Folder,
   FolderOpen,
+  GitBranch,
   Home,
   LayoutGrid,
   ListChecks,
   MessageSquare,
+  Mic,
   Monitor,
   MoreHorizontal,
   Pause,
@@ -34,6 +39,7 @@ import {
   Search,
   Send,
   Settings,
+  Shield,
   ShieldCheck,
   SquarePen,
   Trash2,
@@ -251,9 +257,15 @@ export type IconName =
   | 'search'
   | 'folder'
   | 'folderOpen'
+  | 'gitBranch'
   | 'arrowLeft'
   | 'arrowRight'
+  | 'arrowDown'
+  | 'copy'
   | 'refresh'
+  | 'mic'
+  | 'shield'
+  | 'audioLines'
   | 'clock'
   | 'book'
   | 'at'
@@ -298,9 +310,15 @@ const ICONS: Record<IconName, ComponentType<any>> = {
   search: Search,
   folder: Folder,
   folderOpen: FolderOpen,
+  gitBranch: GitBranch,
   arrowLeft: CodexArrowLeft,
   arrowRight: CodexArrowRight,
+  arrowDown: ArrowDown,
+  copy: Copy,
   refresh: RotateCw,
+  mic: Mic,
+  shield: Shield,
+  audioLines: AudioLines,
   clock: Clock,
   book: BookOpen,
   at: AtSign,

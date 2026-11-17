@@ -4,7 +4,6 @@ import type { ReactElement } from 'react'
 import type { PageKey } from '../App'
 import { Icon } from './Icon'
 import type { IconName } from './Icon'
-import { StatusDot } from './ui'
 import { Tooltip } from './Tooltip'
 
 export interface SidebarItem {
@@ -26,7 +25,7 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
 export interface SidebarProps {
   current: PageKey
   onNavigate: (page: PageKey) => void
-  connected: boolean
+  connected?: boolean
   /** 各导航项徽标（数字 >0 才显示），如 running run 数 / pending 审批数。 */
   badges?: Partial<Record<PageKey, number>>
   /** 背景状态点（非常克制）：Chat running、Artifacts 有新结果等。 */
@@ -36,7 +35,7 @@ export interface SidebarProps {
 export default function Sidebar({
   current,
   onNavigate,
-  connected,
+  connected: _connected,
   badges,
   dots,
 }: SidebarProps): ReactElement {
@@ -120,16 +119,6 @@ export default function Sidebar({
               <Icon name="settings" size={20} filled={current === 'settings'} />
             </span>
           </button>
-        </Tooltip>
-
-        <Tooltip content={connected ? 'Host 服务已连接' : 'Host 服务已离线'} side="right">
-          <div
-            className="host-status"
-            title={connected ? 'Host 已连接' : 'Host 已离线'}
-            aria-label={connected ? 'Host 就绪' : 'Host 离线'}
-          >
-            <StatusDot tone={connected ? 'ready' : 'offline'} />
-          </div>
         </Tooltip>
 
         <Tooltip content="个人工作区 (Vesta)" side="right">

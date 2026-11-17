@@ -26,6 +26,7 @@ describe('ConversationList', () => {
       />,
     )
     expect(html).toContain('工作')
+    expect(html).toContain('Cove')
     expect(html).toContain('Desktop redesign')
     expect(html).toContain('工作中')
     expect(html).toContain('conversation-item__status--running')
@@ -86,9 +87,9 @@ describe('ConversationList', () => {
     expect(html).toContain('conversation-sidebar__dot')
   })
 
-  it('项目文件夹树形结构：不显示常驻箭头与统计数字，子项缩进，超过5条显示展开按钮', () => {
-    // 构造带项目的会话列表（共 6 个同项目会话）
-    const projectConvs: Conversation[] = Array.from({ length: 6 }, (_, i) => ({
+  it('项目文件夹树形结构：不显示常驻箭头与统计数字，子项缩进，超过6条显示 See all (N) 按钮', () => {
+    // 构造带项目的会话列表（共 7 个同项目会话，超过 6 条触发折叠）
+    const projectConvs: Conversation[] = Array.from({ length: 7 }, (_, i) => ({
       ...conversation,
       id: `p-${i}`,
       title: `[ProjectX] 任务步骤 ${i + 1}`,
@@ -107,7 +108,7 @@ describe('ConversationList', () => {
     expect(html).toContain('项目')
     expect(html).toContain('ProjectX')
 
-    // 验证移除最右侧数量统计（如不再有 project-node__count 包含 "6"）
+    // 验证移除最右侧数量统计（如不再有 project-node__count 包含 "7"）
     expect(html).not.toContain('project-node__count')
 
     // 验证文件夹图标容器与原地替换图标
@@ -118,8 +119,8 @@ describe('ConversationList', () => {
     // 验证子项缩进 class
     expect(html).toContain('conversation-item--indent')
 
-    // 验证超过 5 条时提供“展开显示”按钮
+    // 验证超过 6 条时提供“See all (7)”按钮
     expect(html).toContain('project-node__expand-btn')
-    expect(html).toContain('展开显示')
+    expect(html).toContain('See all (7)')
   })
 })

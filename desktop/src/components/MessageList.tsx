@@ -2,6 +2,7 @@ import { memo } from 'react'
 import type { Message } from '../api/types'
 import { EmptyState } from './ui'
 import { AssistantContent } from './AssistantContent'
+import { UserMessageBubble } from './UserMessageBubble'
 
 export { AssistantContent }
 
@@ -86,9 +87,10 @@ export default memo(function MessageList({
       {thread.map((turn) => {
         if (turn.role === 'user') {
           return (
-            <div key={turn.key} className="message-user">
-              <div className="message-user__body">{turn.content}</div>
-            </div>
+            <UserMessageBubble
+              key={turn.key}
+              content={turn.content}
+            />
           )
         }
         if (!turn.author) {

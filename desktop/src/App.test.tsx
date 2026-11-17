@@ -29,7 +29,12 @@ describe('App Shell', () => {
     // 检查侧栏导航与核心入口
     expect(html).toContain('sidebar')
     expect(html).toContain('主导航')
-    // 检查状态指示胶囊
-    expect(html).toContain('window-toolbar__status-capsule')
+    // 检查顶栏右侧功能入口（保留 chat 页面下的详情按钮，去除多余常驻胶囊与右上角冗余设置）
+    expect(html).toContain('window-toolbar__btn--detail')
+    expect(html).toContain('详情')
+    expect(html).not.toContain('window-toolbar__status-capsule')
+    // 检查顶栏绑定的当前工作区项目标识
+    expect(html).toContain('window-toolbar__project-badge')
+    expect(html).toContain('cove-desktop')
   })
 })

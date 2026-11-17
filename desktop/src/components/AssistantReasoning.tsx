@@ -1,16 +1,14 @@
-/** 模型思考/推理过程（reasoning）展示：与最终答案彻底分开。
-
-- 只渲染一个「下拉尖」toggle，内联在 Vesta 头像行（与头像平行）。
-- 点击展开/收起思考内容（grid 0fr→1fr 高度过渡，丝滑）。
-- 思考中不自动展开、不占正文位置：正文区只放最终回复，思考内容仅在被
-  点击展开时显示。
-- label（Thinking / Thought for 1.8s）作为 title/aria-label，不占可见文本。
-*/
+/** Codex 桌面端极简原生风格思考过程折叠栏。
+ * - 纯文本内联风格，无背景框、无外边框与阴影。
+ * - 触发行带有小箭头和状态文案，思考中带有 Shimmer 流光渐变动画。
+ * - 展开内容区左侧带有 1.5px 纯净竖线。
+ */
 
 import { useEffect, useRef, useState } from 'react'
 import type { ReactElement } from 'react'
 
 import { formatDuration } from '../agent/turnPresentation'
+import { Icon } from './Icon'
 
 export default function AssistantReasoning({
   text,
@@ -19,11 +17,11 @@ export default function AssistantReasoning({
   durationMs = null,
 }: {
   text: string
-  /** 思考仍在进行（正文尚未出现）时置 true：自动展开并跟随。 */
+  /** 思考仍在进行时置 true：自动展开并跟随 */
   autoExpand?: boolean
-  /** 思考中（显示 spinner）。 */
+  /** 思考进行中（添加 Shimmer 流光动画与状态文案） */
   busy?: boolean
-  /** 思考耗时（思考完成、折叠时显示 “Thought for 1.8s”）。 */
+  /** 思考耗时 */
   durationMs?: number | null
 }): ReactElement | null {
   const [open, setOpen] = useState(autoExpand)
@@ -34,44 +32,51 @@ export default function AssistantReasoning({
     const wasAuto = prevAutoExpand.current
     prevAutoExpand.current = autoExpand
     if (autoExpand) {
-      // 新一轮思考开始 → 接管并展开。
       setUserPinned(false)
       setOpen(true)
     } else if (wasAuto && !autoExpand && !userPinned) {
-      // 思考结束、正文出现 → 平滑收起（除非用户手动展开过）。
       setOpen(false)
     }
   }, [autoExpand, userPinned])
 
   if (!text) return null
 
-  const label = busy
-    ? 'Thinking'
+  const labelText = busy
+    ? '思考中...'
     : durationMs !== null
-      ? `Thought for ${formatDuration(durationMs)}`
-      : 'Thinking'
+      ? `已深度思考 ${formatDuration(durationMs)}`
+      : '思考过程'
 
   return (
     <div
-      className={`assistant-reasoning${open ? ' assistant-reasoning--open' : ''}`}
+      className={`assistant-reasoning${open ? ' assistant-reasoning--open' : ''}${busy ? ' assistant-reasoning--busy' : ''}`}
       data-testid="assistant-reasoning"
     >
-      <button
-        type="button"
-        className="assistant-reasoning__toggle"
+      <div
+        className="assistant-reasoning__header"
+        role="button"
+        tabIndex={0}
         aria-expanded={open}
         aria-label={open ? '收起思考过程' : '展示思考过程'}
-        title={label}
         onClick={() => {
           setUserPinned(true)
           setOpen((value) => !value)
         }}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault()
+            setUserPinned(true)
+            setOpen((value) => !value)
+          }
+        }}
       >
-        {busy ? (
-          <span className="assistant-reasoning__spinner" aria-hidden="true" />
-        ) : null}
-        <span className="assistant-reasoning__chevron" aria-hidden="true" />
-      </button>
+        <span className="assistant-reasoning__chevron">
+          <Icon name="chevronRight" size={12} strokeWidth={1.6} />
+        </span>
+        <span className={`assistant-reasoning__label${busy ? ' assistant-reasoning__label--shimmer' : ''}`}>
+          {labelText}
+        </span>
+      </div>
       <div className="assistant-reasoning__wrap">
         <div className="assistant-reasoning__body">{text}</div>
       </div>
