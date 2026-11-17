@@ -83,6 +83,15 @@ describe('Sidebar (App Shell)', () => {
     expect(html).toContain('nav-badge--dot')
   })
 
+  it('在非主页时主页按钮正确渲染未激活状态且可供点击', () => {
+    const html = renderToStaticMarkup(
+      <Sidebar current="settings" onNavigate={() => {}} connected />,
+    )
+    expect(html).toContain('sidebar-brand-wrap')
+    expect(html).toContain('nav-item nav-item--home')
+    expect(html).not.toContain('nav-item nav-item--home active')
+  })
+
   it('无 dots 时不渲染状态点', () => {
     const html = renderToStaticMarkup(
       <Sidebar current="chat" onNavigate={() => {}} connected />,

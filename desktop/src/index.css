@@ -240,11 +240,13 @@ summary:focus-visible {
   align-items: center;
   background: var(--bg-sidebar);
   border-right: 1px solid var(--border-subtle);
-  padding: 46px 8px 10px; /* 顶部留出 46px 完美容纳 macOS 原生交通灯红绿灯 (匹配 x:18 y:18) */
-  -webkit-app-region: drag; /* 侧栏顶部交通灯空隙区域可拖拽窗口 */
+  padding: 46px 8px 10px;
+  -webkit-app-region: no-drag; /* 导航栏整体禁止作为窗口拖拽区域，防止主页及子项点击失效 */
+  app-region: no-drag;
 }
 
-.sidebar-brand {
+.sidebar-brand,
+.sidebar-brand-wrap {
   width: 34px;
   height: 34px;
   display: grid;
@@ -257,6 +259,7 @@ summary:focus-visible {
   font-weight: 680;
   letter-spacing: -0.03em;
   -webkit-app-region: no-drag;
+  app-region: no-drag;
 }
 
 .sidebar-nav,
@@ -267,6 +270,7 @@ summary:focus-visible {
   align-items: center;
   gap: 5px;
   -webkit-app-region: no-drag;
+  app-region: no-drag;
 }
 
 .sidebar-footer {
@@ -6924,6 +6928,8 @@ body,
   padding: 4px 0 12px !important;
   gap: 0 !important;
   z-index: 20 !important;
+  -webkit-app-region: no-drag !important;
+  app-region: no-drag !important;
 }
 
 /* 顶部 Codex 风格 Home (工作区入口)：统一使用 nav-item 体系 */
@@ -6932,6 +6938,8 @@ body,
   display: flex !important;
   justify-content: center !important;
   margin-bottom: 8px !important;
+  -webkit-app-region: no-drag !important;
+  app-region: no-drag !important;
 }
 
 .sidebar-nav {
@@ -6940,6 +6948,8 @@ body,
   align-items: center !important;
   gap: 8px !important;
   width: 100% !important;
+  -webkit-app-region: no-drag !important;
+  app-region: no-drag !important;
 }
 
 /* 大号 38px 导航按钮 (Icon 提升至 20px) */
@@ -6956,6 +6966,8 @@ body,
   cursor: pointer !important;
   padding: 0 !important;
   position: relative !important;
+  -webkit-app-region: no-drag !important;
+  app-region: no-drag !important;
   transition: background 150ms cubic-bezier(0.23, 1, 0.32, 1), color 150ms cubic-bezier(0.23, 1, 0.32, 1), transform 120ms ease !important;
 }
 
@@ -7023,6 +7035,8 @@ body,
   width: 100% !important;
   padding-top: 10px !important;
   border-top: none !important;
+  -webkit-app-region: no-drag !important;
+  app-region: no-drag !important;
 }
 
 .host-status {
@@ -7046,6 +7060,8 @@ body,
   margin-top: 2px !important;
   cursor: pointer !important;
   border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  -webkit-app-region: no-drag !important;
+  app-region: no-drag !important;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
   transition: transform 120ms ease !important;
 }

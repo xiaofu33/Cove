@@ -200,6 +200,21 @@ export default function App(): React.JSX.Element {
       } else if (cmdOrCtrl && e.key === ']') {
         e.preventDefault()
         handleHistoryForward()
+      } else if (cmdOrCtrl && e.key >= '1' && e.key <= '7' && !e.shiftKey && !e.altKey) {
+        e.preventDefault()
+        const keyMap: Record<string, PageKey> = {
+          '1': 'chat',
+          '2': 'runs',
+          '3': 'memory',
+          '4': 'approvals',
+          '5': 'automations',
+          '6': 'artifacts',
+          '7': 'computer',
+        }
+        const targetPage = keyMap[e.key]
+        if (targetPage) {
+          navigate(targetPage)
+        }
       }
     }
     window.addEventListener('keydown', handleKeyDown)
