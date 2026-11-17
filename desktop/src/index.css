@@ -5963,9 +5963,8 @@ body,
   backdrop-filter: blur(22px) saturate(190%) !important;
   -webkit-backdrop-filter: blur(22px) saturate(190%) !important;
   overflow: hidden !important;
-  /* 苹果官方连续曲率超椭圆 (Squircle) */
+  /* 苹果官方连续曲率超椭圆 (Squircle)，由 Electron 45 内核支持 */
   border-radius: 11px !important;
-  -webkit-corner-smoothing: 100% !important;
   -electron-corner-smoothing: 100% !important;
   /* 1px 视网膜双层精致描边，消除剪纸感 */
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08) !important;
