@@ -16,6 +16,7 @@ from typing import Any
 
 from app.models.types import ToolDefinition, ToolPermission
 from app.sandbox import SandboxConfig, SandboxNetworkMode, SandboxSupervisor
+from app.tools.hooks import ToolExecutionContext
 
 from ..base import BaseTool
 from ._workspace import resolve_workspace_path, workspace_root_path
@@ -72,17 +73,47 @@ class ShellCommandTool(BaseTool):
         )
 
     async def execute(self, arguments: dict[str, Any]) -> dict[str, Any]:
+        return await self._execute_in_root(
+            self._workspace_root,
+            arguments,
+            sandbox_supervisor=self._sandbox_supervisor,
+        )
+
+    async def execute_with_context(
+        self,
+        arguments: dict[str, Any],
+        context: ToolExecutionContext,
+    ) -> dict[str, Any]:
+        root = context.workspace_root or self._workspace_root
+        supervisor = (
+            self._sandbox_supervisor.for_workspace(root)
+            if self._sandbox_supervisor is not None
+            else None
+        )
+        return await self._execute_in_root(
+            root,
+            arguments,
+            sandbox_supervisor=supervisor,
+        )
+
+    async def _execute_in_root(
+        self,
+        workspace_root: Path,
+        arguments: dict[str, Any],
+        *,
+        sandbox_supervisor: SandboxSupervisor | None,
+    ) -> dict[str, Any]:
         command = arguments.get("command")
         if not isinstance(command, str) or not command.strip():
             raise ValueError("'command' must be a non-empty string")
 
-        cwd = self._workspace_root
+        cwd = workspace_root
         raw_directory = arguments.get("working_directory")
         if raw_directory is not None:
             if not isinstance(raw_directory, str):
                 raise ValueError("'working_directory' must be a string")
             cwd = resolve_workspace_path(
-                self._workspace_root,
+                workspace_root,
                 raw_directory,
                 allow_root=True,
             )
@@ -94,7 +125,7 @@ class ShellCommandTool(BaseTool):
 
         started_at = perf_counter()
         timed_out = False
-        if self._sandbox_supervisor is None:
+        if sandbox_supervisor is None:
             process = await asyncio.create_subprocess_shell(
                 command,
                 stdout=asyncio.subprocess.PIPE,
@@ -104,7 +135,7 @@ class ShellCommandTool(BaseTool):
             )
         else:
             environment = _shell_environment()
-            launch = self._sandbox_supervisor.prepare_launch(
+            launch = sandbox_supervisor.prepare_launch(
                 command="/bin/sh",
                 args=("-c", command),
                 env=environment,

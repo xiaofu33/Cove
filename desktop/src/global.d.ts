@@ -8,6 +8,8 @@ interface VestaDesktopApi {
     chrome: string
   }
   openExternal: (url: string) => Promise<boolean>
+  selectDirectory: () => Promise<string | null>
+  openPath: (path: string) => Promise<boolean>
   notify: (notification: {
     title: string
     body: string

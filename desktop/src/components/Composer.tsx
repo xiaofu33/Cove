@@ -5,6 +5,7 @@ import type { AgentMode } from '../api/types'
 import { useWorkspaceStore, type ProjectContext } from '../stores/workspace'
 import CommandPalette, { type ComposerCommand } from './CommandPalette'
 import { Icon } from './Icon'
+import WorkspaceSelector from './WorkspaceSelector'
 
 export type { ComposerCommand }
 
@@ -31,6 +32,14 @@ export interface ComposerProps {
   /** 是否已有消息（用户发出第一条消息开始对话后为 true，隐藏顶部项目+工作树选择栏） */
   hasMessages?: boolean
   messagesCount?: number
+  /** 绑定的工作区路径（null 表示 No project）。 */
+  workspacePath?: string | null
+  /** 工作区是否已永久锁定。 */
+  workspaceFixed?: boolean
+  /** 绑定的目录在磁盘上是否仍然可用。 */
+  workspaceAvailable?: boolean
+  /** 变更工作区回调（仅未锁定前生效）。 */
+  onWorkspaceChange?: (path: string | null) => Promise<void> | void
 }
 
 export interface LocalModelOption {
@@ -98,16 +107,18 @@ export default function Composer({
   placeholder = '输入任务指令，@ 引用文件，/ 调用命令',
   modelSettings,
   onModelChange,
-  project,
   hasMessages,
   messagesCount,
+  workspacePath,
+  workspaceFixed = false,
+  workspaceAvailable = true,
+  onWorkspaceChange,
 }: ComposerProps): React.JSX.Element {
   const [internalValue, setInternalValue] = useState('')
   const [commandOpen, setCommandOpen] = useState(false)
   const [isComposing, setIsComposing] = useState(false)
   const [modelMenuOpen, setModelMenuOpen] = useState(false)
   const [modeMenuOpen, setModeMenuOpen] = useState(false)
-  const [projectMenuOpen, setProjectMenuOpen] = useState(false)
   const [worktreeMenuOpen, setWorktreeMenuOpen] = useState(false)
 
   // 当 messages.length === 0（新对话未发送消息前）渲染顶部项目+工作树栏
@@ -118,16 +129,10 @@ export default function Composer({
         ? messagesCount === 0
         : true
 
-  const storeProject = useWorkspaceStore((state) => state.currentProject)
-  const recentProjects = useWorkspaceStore((state) => state.recentProjects)
-  const setStoreProject = useWorkspaceStore((state) => state.setCurrentProject)
-  const addStoreProject = useWorkspaceStore((state) => state.addProject)
   const currentWorktree = useWorkspaceStore((state) => state.currentWorktree)
   const worktrees = useWorkspaceStore((state) => state.worktrees)
   const setCurrentWorktree = useWorkspaceStore((state) => state.setCurrentWorktree)
   const addWorktree = useWorkspaceStore((state) => state.addWorktree)
-
-  const activeProject = project ?? storeProject
 
   // 本地模型列表与当前选中模型
   const localModels = useMemo<LocalModelOption[]>(() => {
@@ -154,7 +159,6 @@ export default function Composer({
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const modelMenuRef = useRef<HTMLDivElement>(null)
   const modeMenuRef = useRef<HTMLDivElement>(null)
-  const projectMenuRef = useRef<HTMLDivElement>(null)
   const worktreeMenuRef = useRef<HTMLDivElement>(null)
 
   const draft = value ?? internalValue
@@ -170,9 +174,6 @@ export default function Composer({
       }
       if (modeMenuRef.current && !modeMenuRef.current.contains(target)) {
         setModeMenuOpen(false)
-      }
-      if (projectMenuRef.current && !projectMenuRef.current.contains(target)) {
-        setProjectMenuOpen(false)
       }
       if (worktreeMenuRef.current && !worktreeMenuRef.current.contains(target)) {
         setWorktreeMenuOpen(false)
@@ -246,18 +247,6 @@ export default function Composer({
     }
   }
 
-  const handleOpenFolder = (): void => {
-    setProjectMenuOpen(false)
-    const inputPath = window.prompt?.('输入或选择本地项目文件夹绝对路径：', '~/code/new-project')
-    if (inputPath && inputPath.trim()) {
-      const cleanPath = inputPath.trim()
-      const segs = cleanPath.split('/').filter(Boolean)
-      const folderName = segs[segs.length - 1] || 'custom-project'
-      const newProj = addStoreProject(folderName, cleanPath)
-      setStoreProject(newProj)
-    }
-  }
-
   const handleAddWorktree = (): void => {
     setWorktreeMenuOpen(false)
     const inputBranch = window.prompt?.('输入要切换或新建的 Git 分支/Worktree：', 'feature/new-branch')
@@ -285,61 +274,15 @@ export default function Composer({
         {/* 新对话未发送消息前：外层底座的顶部栏 */}
         {isNewConversation ? (
           <div className="composer__meta-bar px-3.5 py-1.5 flex items-center gap-3.5 text-[13px] text-zinc-600">
-            {/* 1. 项目选择器：[Folder 图标] {currentProject?.name || '选择项目'} [ChevronDown 图标] */}
-            <div className="composer__top-project-wrap" ref={projectMenuRef}>
-              <button
-                type="button"
-                className="composer__project-pill composer__top-project-btn flex items-center gap-1.5 hover:text-zinc-900 transition-colors cursor-pointer"
-                onClick={() => {
-                  setWorktreeMenuOpen(false)
-                  setProjectMenuOpen((v) => !v)
-                }}
-                aria-haspopup="listbox"
-                aria-expanded={projectMenuOpen}
-                title={`当前项目：${activeProject?.name || '选择项目'} (${activeProject?.path || ''})`}
-              >
-                <Icon name="folder" size={14} className="composer__top-icon text-zinc-500" />
-                <span className="composer__top-project-name font-medium text-zinc-800">
-                  {activeProject?.name || '选择项目'}
-                </span>
-                <Icon name="chevronDown" size={11} className="composer__top-chevron text-zinc-400" />
-              </button>
-
-              {projectMenuOpen ? (
-                <div className="composer__dropdown composer__project-dropdown" role="listbox">
-                  <div className="composer__dropdown-header">最近项目 · Recent Projects</div>
-                  {recentProjects.map((p) => {
-                    const isCurrent = activeProject?.id === p.id
-                    return (
-                      <button
-                        key={p.id}
-                        type="button"
-                        className={`composer__dropdown-item ${isCurrent ? 'active' : ''}`}
-                        onClick={() => {
-                          setStoreProject(p)
-                          setProjectMenuOpen(false)
-                        }}
-                      >
-                        <div className="composer__dropdown-item-meta">
-                          <span className="composer__dropdown-name">{p.name}</span>
-                          <span className="composer__dropdown-tier">{p.path}</span>
-                        </div>
-                        {isCurrent ? <Icon name="check" size={12} /> : null}
-                      </button>
-                    )
-                  })}
-                  <div className="composer__dropdown-divider" />
-                  <button
-                    type="button"
-                    className="composer__dropdown-item composer__dropdown-item--add"
-                    onClick={handleOpenFolder}
-                  >
-                    <Icon name="plus" size={13} />
-                    <span>打开本地文件夹...</span>
-                  </button>
-                </div>
-              ) : null}
-            </div>
+            {/* 顶栏工作区选择器：真实对接到后端绑定、支持搜索、Recent 列表、系统选择器与 No Project */}
+            <WorkspaceSelector
+              workspacePath={workspacePath}
+              fixed={workspaceFixed}
+              available={workspaceAvailable}
+              disabled={busy}
+              onSelectWorkspace={onWorkspaceChange}
+              variant="top"
+            />
 
             {/* 2. 工作树 / 分支选择器：[GitBranch 图标] {currentWorktree || 'main'} [ChevronDown 图标] */}
             <div className="composer__top-worktree-wrap" ref={worktreeMenuRef}>
@@ -347,7 +290,6 @@ export default function Composer({
                 type="button"
                 className="composer__top-worktree-btn flex items-center gap-1.5 hover:text-zinc-900 transition-colors cursor-pointer"
                 onClick={() => {
-                  setProjectMenuOpen(false)
                   setWorktreeMenuOpen((v) => !v)
                 }}
                 aria-haspopup="listbox"
@@ -476,40 +418,15 @@ export default function Composer({
                 ) : null}
               </div>
 
-              {/* 对话进行中（!isNewConversation）保留紧凑的项目胶囊标识 */}
+              {/* 对话开始后（!isNewConversation），顶栏收起，在底部工具栏只读展示已绑定的工作区标签 */}
               {!isNewConversation ? (
-                <div className="composer__project-selector-wrap" ref={projectMenuRef}>
-                  <button
-                    type="button"
-                    className="composer__project-pill"
-                    onClick={() => setProjectMenuOpen((v) => !v)}
-                    title={`当前项目：${activeProject.name} (${activeProject.path})`}
-                  >
-                    <Icon name="folder" size={13} className="composer__project-icon" />
-                    <span className="composer__project-name">{activeProject.name}</span>
-                    <Icon name="chevronDown" size={11} className="composer__chevron" />
-                  </button>
-
-                  {projectMenuOpen ? (
-                    <div className="composer__dropdown composer__project-dropdown" role="listbox">
-                      <div className="composer__dropdown-header">当前项目上下文</div>
-                      {recentProjects.map((p) => (
-                        <button
-                          key={p.id}
-                          type="button"
-                          className={`composer__dropdown-item ${activeProject.id === p.id ? 'active' : ''}`}
-                          onClick={() => {
-                            setStoreProject(p)
-                            setProjectMenuOpen(false)
-                          }}
-                        >
-                          <span className="composer__dropdown-name">{p.name}</span>
-                          <span className="composer__dropdown-tier">{p.path}</span>
-                        </button>
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
+                <WorkspaceSelector
+                  workspacePath={workspacePath}
+                  fixed={workspaceFixed}
+                  available={workspaceAvailable}
+                  disabled={busy}
+                  onSelectWorkspace={onWorkspaceChange}
+                />
               ) : null}
             </div>
 
@@ -612,6 +529,7 @@ export default function Composer({
               )}
             </div>
           </div>
+
         </div>
       </div>
 

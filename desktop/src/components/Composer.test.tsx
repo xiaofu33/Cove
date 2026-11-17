@@ -22,6 +22,7 @@ describe('Composer', () => {
       <Composer
         disabled={false}
         hasMessages={false}
+        workspacePath="/Users/alice/cove-desktop"
         onSend={async () => {}}
       />,
     )
@@ -31,6 +32,17 @@ describe('Composer', () => {
     expect(html).toContain('composer__top-worktree-name')
     expect(html).toContain('main')
     expect(html).toContain('composer-inner-box--new')
+  })
+
+  it('新对话未指定工作区时顶栏默认展示 No Project', () => {
+    const html = renderToStaticMarkup(
+      <Composer
+        disabled={false}
+        hasMessages={false}
+        onSend={async () => {}}
+      />,
+    )
+    expect(html).toContain('No Project')
   })
 
   it('已发送消息后（messages.length > 0）自动收起外层底座并隐藏顶部选择栏', () => {

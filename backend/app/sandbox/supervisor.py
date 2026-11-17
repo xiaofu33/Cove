@@ -41,6 +41,13 @@ class SandboxSupervisor:
         self._native_backend = native_backend or _platform_backend()
         self._host_backend = HostSandboxBackend()
 
+    def for_workspace(self, workspace_root: str | Path) -> SandboxSupervisor:
+        """为特定工作区创建共享同一原生沙箱后端的 Supervisor。"""
+        return SandboxSupervisor(
+            workspace_root,
+            native_backend=self._native_backend,
+        )
+
     def prepare_launch(
         self,
         *,

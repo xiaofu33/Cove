@@ -19,6 +19,10 @@ const desktopApi = {
   },
   openExternal: (url: string): Promise<boolean> =>
     ipcRenderer.invoke('vesta:open-external', url) as Promise<boolean>,
+  selectDirectory: (): Promise<string | null> =>
+    ipcRenderer.invoke('vesta:select-directory') as Promise<string | null>,
+  openPath: (targetPath: string): Promise<boolean> =>
+    ipcRenderer.invoke('vesta:open-path', targetPath) as Promise<boolean>,
   notify: (notification: DesktopNotification): void => {
     ipcRenderer.send('vesta:notify', notification)
   },

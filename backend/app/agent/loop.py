@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import replace
+from pathlib import Path
 
 from app.checkpoint import RunCheckpoint, SQLiteCheckpointStore
 from app.context import ContextManager, ConversationSummaryState
@@ -162,6 +163,7 @@ class AgentLoop:
         summary_state: ConversationSummaryState | None,
         recovery_checkpoint: RunCheckpoint | None,
         mode: AgentMode,
+        workspace_root: Path | None = None,
     ) -> AgentResult:
         """执行一次已分配 Run ID 的 Agent 循环。"""
 
@@ -947,6 +949,7 @@ class AgentLoop:
                 repeated_count=repeated_count,
                 emitter=emitter,
                 hook=tool_event_hook,
+                workspace_root=workspace_root,
             )
             tool_calls.extend(round_outcome.records)
             messages.extend(round_outcome.result_messages)

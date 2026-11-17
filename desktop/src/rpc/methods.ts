@@ -9,6 +9,7 @@ export const RpcMethods = {
   conversationList: 'conversation.list',
   conversationGet: 'conversation.get',
   conversationCreate: 'conversation.create',
+  conversationSetWorkspace: 'conversation.set_workspace',
   conversationSend: 'conversation.send',
   conversationRename: 'conversation.rename',
   conversationDelete: 'conversation.delete',

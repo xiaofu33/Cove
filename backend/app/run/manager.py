@@ -12,10 +12,12 @@ RunManager 只负责“Run 生命周期对象”：把一次 Agent 执行包装�
 from __future__ import annotations
 
 import asyncio
+from contextlib import suppress
 import inspect
 import logging
 from collections.abc import Awaitable, Callable, Sequence
 from datetime import datetime
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from app.agent.events import AgentEventHandler
@@ -150,6 +152,7 @@ class RunManager:
         scheduled_for: datetime | None = None,
         triggered_at: datetime | None = None,
         mode: AgentMode = AgentMode.NORMAL,
+        workspace_root: str | Path | None = None,
     ) -> tuple[str, asyncio.Task[None]]:
         """创建一个新 Run 并开始异步执行，返回 (run_id, task)。
 
@@ -159,9 +162,15 @@ class RunManager:
 
         ``source / source_id / scheduled_for / triggered_at`` 是触发来源
         provenance（如 automation_id），随 Run 一起持久化；``mode`` 是本次
-        执行的模式（NORMAL / PLAN），一并持久化。
+        执行的模式（NORMAL / PLAN），一并持久化；``workspace_root`` 为本次 Run
+        实际绑定的工作区绝对路径。
         """
 
+        normalized_workspace = (
+            str(Path(workspace_root).expanduser().resolve())
+            if workspace_root is not None
+            else None
+        )
         run = await self._run_store.create(
             conversation_id=conversation_id,
             user_message=user_message,
@@ -171,6 +180,7 @@ class RunManager:
             scheduled_for=scheduled_for,
             triggered_at=triggered_at,
             mode=mode,
+            workspace_root=normalized_workspace,
         )
         await self._run_store.mark_started(run.id)
         task = asyncio.create_task(
@@ -183,6 +193,11 @@ class RunManager:
                 event_handler=event_handler,
                 recovery_run_id=recovery_run_id,
                 mode=mode,
+                workspace_root=(
+                    Path(normalized_workspace)
+                    if normalized_workspace is not None
+                    else None
+                ),
             )
         )
         self._active_tasks[run.id] = task
@@ -372,8 +387,9 @@ class RunManager:
             event_handler=event_handler,
             recovery_run_id=run_id,
             recovered_from_run_id=run_id,
-            # 恢复后的新 Run 沿用旧 Run 的执行模式。
+            # 恢复后的新 Run 沿用旧 Run 的执行模式与工作区。
             mode=run.mode,
+            workspace_root=run.workspace_root,
         )
 
     # ------------------------------------------------------------------
@@ -391,19 +407,31 @@ class RunManager:
         event_handler: AgentEventHandler | None,
         recovery_run_id: str | None,
         mode: AgentMode,
+        workspace_root: Path | None = None,
     ) -> None:
         try:
             result: AgentResult | None = None
             try:
+                stream_kwargs: dict[str, Any] = {
+                    "history": history,
+                    "conversation_id": conversation_id,
+                    "event_handler": event_handler,
+                    "summary_state": summary_state,
+                    "run_id": run_id,
+                    "recovery_run_id": recovery_run_id,
+                    "mode": mode,
+                }
+                with suppress(Exception):
+                    sig = inspect.signature(self._runtime.run_stream)
+                    if "workspace_root" in sig.parameters or any(
+                        p.kind == inspect.Parameter.VAR_KEYWORD
+                        for p in sig.parameters.values()
+                    ):
+                        stream_kwargs["workspace_root"] = workspace_root
+
                 async for event in self._runtime.run_stream(
                     user_message,
-                    history=history,
-                    conversation_id=conversation_id,
-                    event_handler=event_handler,
-                    summary_state=summary_state,
-                    run_id=run_id,
-                    recovery_run_id=recovery_run_id,
-                    mode=mode,
+                    **stream_kwargs,
                 ):
                     if event.result is not None:
                         result = event.result

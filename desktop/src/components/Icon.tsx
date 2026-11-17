@@ -23,6 +23,8 @@ import {
   FileText,
   Folder,
   FolderOpen,
+  FolderPlus,
+  FolderX,
   GitBranch,
   Home,
   LayoutGrid,
@@ -257,6 +259,8 @@ export type IconName =
   | 'search'
   | 'folder'
   | 'folderOpen'
+  | 'folderPlus'
+  | 'folderX'
   | 'gitBranch'
   | 'arrowLeft'
   | 'arrowRight'
@@ -310,6 +314,8 @@ const ICONS: Record<IconName, ComponentType<any>> = {
   search: Search,
   folder: Folder,
   folderOpen: FolderOpen,
+  folderPlus: FolderPlus,
+  folderX: FolderX,
   gitBranch: GitBranch,
   arrowLeft: CodexArrowLeft,
   arrowRight: CodexArrowRight,

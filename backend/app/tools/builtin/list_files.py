@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from app.models.types import ToolDefinition
+from app.tools.hooks import ToolExecutionContext
 
 from ..base import BaseTool
 from ._workspace import resolve_workspace_path, workspace_root_path
@@ -40,22 +41,37 @@ class ListFilesTool(BaseTool):
         )
 
     async def execute(self, arguments: dict[str, Any]) -> dict[str, Any]:
+        return await self._execute_in_root(self._workspace_root, arguments)
+
+    async def execute_with_context(
+        self,
+        arguments: dict[str, Any],
+        context: ToolExecutionContext,
+    ) -> dict[str, Any]:
+        root = context.workspace_root or self._workspace_root
+        return await self._execute_in_root(root, arguments)
+
+    async def _execute_in_root(
+        self,
+        workspace_root: Path,
+        arguments: dict[str, Any],
+    ) -> dict[str, Any]:
         directory = arguments.get("directory", ".")
         if not isinstance(directory, str):
             raise ValueError("'directory' must be a string")
 
         target = resolve_workspace_path(
-            self._workspace_root,
+            workspace_root,
             directory,
             allow_root=True,
         )
         files = await asyncio.to_thread(
             _list_workspace_files,
-            self._workspace_root,
+            workspace_root,
             target,
         )
         return {
-            "directory": (target.relative_to(self._workspace_root).as_posix() or "."),
+            "directory": (target.relative_to(workspace_root).as_posix() or "."),
             "files": files[:MAX_LISTED_FILES],
             "count": min(len(files), MAX_LISTED_FILES),
             "truncated": len(files) > MAX_LISTED_FILES,

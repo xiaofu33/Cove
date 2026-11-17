@@ -66,7 +66,8 @@
   --space-8: 32px;
 
   /* ===============================
-   * 圆角标尺 (Radius)
+   * 圆角标尺 (Radius System)
+   * 遵循 Apple HIG 与 Codex 桌面工作台审美
    * =============================== */
   --radius-xs: 4px;
   --radius-sm: 6px;
@@ -106,8 +107,8 @@
   --warning: var(--status-warning);
   --danger: var(--status-error);
   --radius-control: var(--radius-sm);
-  --radius-surface: var(--radius-lg);
-  --radius-composer: var(--radius-xl);
+  --radius-surface: var(--radius-md);
+  --radius-composer: var(--radius-lg);
 
   --bg: #ffffff;
   --bg-panel: #ffffff;

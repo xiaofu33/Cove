@@ -24,7 +24,9 @@ CREATE TABLE IF NOT EXISTS conversations (
     id TEXT PRIMARY KEY,
     title TEXT NOT NULL,
     created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL
+    updated_at TEXT NOT NULL,
+    workspace_path TEXT,
+    workspace_fixed INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS messages (
@@ -57,12 +59,35 @@ class SQLiteConversationStore:
         self.database_path = Path(database_path).expanduser().resolve()
 
     async def initialize(self) -> None:
-        """创建数据库目录和数据表（含幂等列迁移）。"""
+        """创建数据库目录和数据表（含幂等列迁移与旧会话兼容）。"""
 
         self.database_path.parent.mkdir(parents=True, exist_ok=True)
         async with self._connect() as database:
             await database.executescript(_SCHEMA)
             await _ensure_column(database, "messages", "reasoning", "TEXT")
+            await _ensure_column(database, "conversations", "workspace_path", "TEXT")
+            await _ensure_column(
+                database,
+                "conversations",
+                "workspace_fixed",
+                "INTEGER NOT NULL DEFAULT 0",
+            )
+            # 显式兼容方案：
+            # 升级前已产生历史消息的旧会话实际在全局默认工作区执行；
+            # 为避免相对路径含义发生漂移，将其显式绑定为全局旧工作区并固定；
+            # 尚无消息的会话保持未固定 No project 状态。
+            from app.tools.builtin._workspace import workspace_root_path
+            legacy_root = str(workspace_root_path(None))
+            await database.execute(
+                """
+                UPDATE conversations
+                SET workspace_path = ?, workspace_fixed = 1
+                WHERE workspace_fixed = 0
+                  AND workspace_path IS NULL
+                  AND id IN (SELECT DISTINCT conversation_id FROM messages)
+                """,
+                (legacy_root,),
+            )
             await database.commit()
 
     async def create(
@@ -70,19 +95,27 @@ class SQLiteConversationStore:
         *,
         title: str = "新会话",
         messages: Sequence[Message] = (),
+        workspace_path: str | None = None,
     ) -> Conversation:
-        """创建会话，并可同时写入初始消息。"""
+        """创建会话，可同时写入初始消息与指定工作区。"""
 
         normalized_title = _normalize_title(title)
+        normalized_workspace = (
+            str(Path(workspace_path).expanduser().resolve())
+            if workspace_path is not None and workspace_path.strip()
+            else None
+        )
         conversation_id = uuid4().hex
         now = _now_iso()
         async with self._connect() as database:
             await database.execute(
                 """
-                INSERT INTO conversations (id, title, created_at, updated_at)
-                VALUES (?, ?, ?, ?)
+                INSERT INTO conversations (
+                    id, title, created_at, updated_at, workspace_path, workspace_fixed
+                )
+                VALUES (?, ?, ?, ?, ?, 0)
                 """,
-                (conversation_id, normalized_title, now, now),
+                (conversation_id, normalized_title, now, now, normalized_workspace),
             )
             await self._insert_messages(database, conversation_id, messages, now)
             await database.commit()
@@ -91,6 +124,55 @@ class SQLiteConversationStore:
         if conversation is None:  # pragma: no cover - SQLite 写入后的防御性检查
             raise RuntimeError("创建会话后无法重新读取会话")
         return conversation
+
+    async def set_workspace(
+        self,
+        conversation_id: str,
+        workspace_path: str | None,
+    ) -> Conversation:
+        """设置或更新未固定会话的工作区。已固定的会话禁止修改。"""
+
+        normalized = (
+            str(Path(workspace_path).expanduser().resolve())
+            if workspace_path is not None and workspace_path.strip()
+            else None
+        )
+        async with self._connect() as database:
+            cursor = await database.execute(
+                "SELECT workspace_fixed FROM conversations WHERE id = ?",
+                (conversation_id,),
+            )
+            row = await cursor.fetchone()
+            if row is None:
+                raise KeyError(f"会话不存在：{conversation_id}")
+            if bool(row["workspace_fixed"]):
+                raise ValueError("会话工作区已固定，无法修改")
+            await database.execute(
+                "UPDATE conversations SET workspace_path = ?, updated_at = ? WHERE id = ?",
+                (normalized, _now_iso(), conversation_id),
+            )
+            await database.commit()
+
+        updated = await self.get(conversation_id)
+        if updated is None:  # pragma: no cover
+            raise RuntimeError("更新会话后无法重新读取会话")
+        return updated
+
+    async def fix_workspace(self, conversation_id: str) -> None:
+        """原子地将会话工作区锁定（固定后不再允许更改）。"""
+
+        async with self._connect() as database:
+            cursor = await database.execute(
+                "SELECT 1 FROM conversations WHERE id = ?",
+                (conversation_id,),
+            )
+            if await cursor.fetchone() is None:
+                raise KeyError(f"会话不存在：{conversation_id}")
+            await database.execute(
+                "UPDATE conversations SET workspace_fixed = 1 WHERE id = ?",
+                (conversation_id,),
+            )
+            await database.commit()
 
     async def get(self, conversation_id: str) -> Conversation | None:
         """按完整 ID 获取会话。"""
@@ -351,6 +433,8 @@ SELECT
     c.title,
     c.created_at,
     c.updated_at,
+    c.workspace_path,
+    c.workspace_fixed,
     COUNT(m.id) AS message_count
 FROM conversations AS c
 LEFT JOIN messages AS m ON m.conversation_id = c.id
@@ -358,12 +442,19 @@ LEFT JOIN messages AS m ON m.conversation_id = c.id
 
 
 def _conversation_from_row(row: aiosqlite.Row) -> Conversation:
+    workspace_path = row["workspace_path"]
+    workspace_available = True
+    if workspace_path is not None:
+        workspace_available = Path(workspace_path).is_dir()
     return Conversation(
         id=row["id"],
         title=row["title"],
         created_at=datetime.fromisoformat(row["created_at"]),
         updated_at=datetime.fromisoformat(row["updated_at"]),
         message_count=row["message_count"],
+        workspace_path=workspace_path,
+        workspace_fixed=bool(row["workspace_fixed"]),
+        workspace_available=workspace_available,
     )
 
 

@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from app.models.types import ToolDefinition
+from app.tools.hooks import ToolExecutionContext
 
 from ..base import BaseTool
 from ._workspace import resolve_workspace_path, workspace_root_path
@@ -41,6 +42,21 @@ class WriteFileTool(BaseTool):
         )
 
     async def execute(self, arguments: dict[str, Any]) -> dict[str, Any]:
+        return await self._execute_in_root(self._workspace_root, arguments)
+
+    async def execute_with_context(
+        self,
+        arguments: dict[str, Any],
+        context: ToolExecutionContext,
+    ) -> dict[str, Any]:
+        root = context.workspace_root or self._workspace_root
+        return await self._execute_in_root(root, arguments)
+
+    async def _execute_in_root(
+        self,
+        workspace_root: Path,
+        arguments: dict[str, Any],
+    ) -> dict[str, Any]:
         relative_path = arguments.get("path")
         content = arguments.get("content")
         if not isinstance(relative_path, str) or not relative_path:
@@ -48,10 +64,10 @@ class WriteFileTool(BaseTool):
         if not isinstance(content, str):
             raise ValueError("'content' must be a string")
 
-        target = resolve_workspace_path(self._workspace_root, relative_path)
+        target = resolve_workspace_path(workspace_root, relative_path)
         await asyncio.to_thread(_write_utf8_file, target, content)
         return {
-            "path": target.relative_to(self._workspace_root).as_posix(),
+            "path": target.relative_to(workspace_root).as_posix(),
             "characters": len(content),
         }
 

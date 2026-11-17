@@ -88,6 +88,7 @@ class ArtifactPublishTool(BaseTool):
                 description=description,
                 run_id=context.run_id,
                 conversation_id=context.conversation_id,
+                workspace_root=context.workspace_root,
             )
         else:
             artifact = await self._service.publish_url(

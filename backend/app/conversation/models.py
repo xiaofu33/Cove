@@ -19,6 +19,12 @@ class Conversation(BaseModel):
     created_at: datetime
     updated_at: datetime
     message_count: int = Field(default=0, ge=0)
+    # 用户绑定的项目目录（绝对路径；None 表示 No project）。
+    workspace_path: str | None = None
+    # 绑定是否已固定（第一条消息接受后永久为 True）。
+    workspace_fixed: bool = False
+    # 绑定目录当前在磁盘上是否可用（No project 永远为 True）。
+    workspace_available: bool = True
 
 
 class ConversationMessageRecord(BaseModel):

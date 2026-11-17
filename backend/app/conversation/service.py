@@ -18,8 +18,11 @@ load→start→wait→save 逻辑。本 Service 不包含任何 CLI print/input 
 from __future__ import annotations
 
 import asyncio
+from contextlib import suppress
+import inspect
 import logging
 from dataclasses import dataclass
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from app.agent.events import (
@@ -41,6 +44,10 @@ if TYPE_CHECKING:  # 避免 app.context ↔ app.conversation 循环导入
     from app.run import Run, RunManager
 
 logger = logging.getLogger("vesta.conversation.service")
+
+
+class WorkspaceUnavailableError(RuntimeError):
+    """会话绑定的工作区目录不存在、已被删除或不可访问。"""
 
 
 @dataclass
@@ -82,6 +89,7 @@ class ConversationService:
         *,
         summary_store: SQLiteConversationSummaryStore | None = None,
         shared_event_handler: AgentEventHandler | None = None,
+        internal_workspaces_dir: str | Path | None = None,
     ) -> None:
         self._conversation_store = conversation_store
         self._run_manager = run_manager
@@ -90,6 +98,12 @@ class ConversationService:
         # 全局共享观察者（如 Desktop WebSocket 广播）：始终与 Trace 一起组合，
         # 手动 / Automation 触发的 Run 最终都进入同一条 broadcast path。
         self._shared_event_handler = shared_event_handler
+        # No project 聊天的独立内部工作目录根路径。
+        if internal_workspaces_dir is None:
+            internal_workspaces_dir = (
+                self._conversation_store.database_path.parent / "workspaces"
+            )
+        self._internal_workspaces_dir = Path(internal_workspaces_dir).expanduser().resolve()
         self._locks: dict[str, asyncio.Lock] = {}
 
     def _lock_for(self, conversation_id: str | None) -> Any:
@@ -146,12 +160,37 @@ class ConversationService:
         on_run_started: Any | None,
         mode: AgentMode,
     ) -> DispatchResult:
-        # 1) 从持久化源加载“触发那一刻最新”的 history / summary。
+        # 1) 从持久化源加载“触发那一刻最新”的 history / summary，并确定工作区与固定状态。
         history: tuple[Any, ...] = ()
+        effective_workspace_root: Path
         if conversation_id is not None:
+            conv = await self._conversation_store.get(conversation_id)
+            if conv is None:
+                raise KeyError(f"会话不存在：{conversation_id}")
+            # 第一条消息被接受时，将绑定永久固定（即使执行失败也不解除）。
+            if not conv.workspace_fixed:
+                await self._conversation_store.fix_workspace(conversation_id)
+
+            if conv.workspace_path is not None:
+                target = Path(conv.workspace_path).expanduser().resolve()
+                if not target.is_dir():
+                    raise WorkspaceUnavailableError(
+                        f"工作区目录不可用或不存在：{conv.workspace_path}"
+                    )
+                effective_workspace_root = target
+            else:
+                internal_dir = (self._internal_workspaces_dir / conversation_id).resolve()
+                await asyncio.to_thread(internal_dir.mkdir, parents=True, exist_ok=True)
+                effective_workspace_root = internal_dir
+
             history = tuple(
                 await self._conversation_store.load_messages(conversation_id)
             )
+        else:
+            default_dir = (self._internal_workspaces_dir / "_unbound").resolve()
+            await asyncio.to_thread(default_dir.mkdir, parents=True, exist_ok=True)
+            effective_workspace_root = default_dir
+
         summary_state = (
             await self._summary_store.load(conversation_id)
             if self._summary_store is not None and conversation_id is not None
@@ -171,18 +210,29 @@ class ConversationService:
             else handlers[0]
         )
 
-        # 3) 启动 Run（携带 provenance + mode）并等待完成。
+        # 3) 启动 Run（携带 provenance + mode + workspace_root）并等待完成。
+        start_kwargs: dict[str, Any] = {
+            "conversation_id": conversation_id,
+            "history": history,
+            "summary_state": summary_state,
+            "event_handler": handler,
+            "source": trigger.source.value,
+            "source_id": trigger.automation_id,
+            "scheduled_for": trigger.scheduled_for,
+            "triggered_at": trigger.triggered_at,
+            "mode": mode,
+        }
+        with suppress(Exception):
+            sig = inspect.signature(self._run_manager.start)
+            if "workspace_root" in sig.parameters or any(
+                p.kind == inspect.Parameter.VAR_KEYWORD
+                for p in sig.parameters.values()
+            ):
+                start_kwargs["workspace_root"] = effective_workspace_root
+
         run_id, _ = await self._run_manager.start(
             content,
-            conversation_id=conversation_id,
-            history=history,
-            summary_state=summary_state,
-            event_handler=handler,
-            source=trigger.source.value,
-            source_id=trigger.automation_id,
-            scheduled_for=trigger.scheduled_for,
-            triggered_at=trigger.triggered_at,
-            mode=mode,
+            **start_kwargs,
         )
         if on_run_started is not None:
             await on_run_started(run_id)

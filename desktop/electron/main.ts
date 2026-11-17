@@ -1,6 +1,7 @@
 import {
   app,
   BrowserWindow,
+  dialog,
   ipcMain,
   Notification,
   screen,
@@ -226,6 +227,24 @@ ipcMain.handle('vesta:open-external', async (_event, url: unknown) => {
   if (typeof url !== 'string' || !isHttpUrl(url)) return false
   await shell.openExternal(url)
   return true
+})
+
+ipcMain.handle('vesta:select-directory', async () => {
+  if (mainWindow === null || mainWindow.isDestroyed()) return null
+  const result = await dialog.showOpenDialog(mainWindow, {
+    properties: ['openDirectory', 'createDirectory'],
+    title: '选择工作区目录',
+  })
+  if (result.canceled || result.filePaths.length === 0) {
+    return null
+  }
+  return result.filePaths[0]
+})
+
+ipcMain.handle('vesta:open-path', async (_event, targetPath: unknown) => {
+  if (typeof targetPath !== 'string' || !targetPath.trim()) return false
+  const error = await shell.openPath(targetPath)
+  return error === ''
 })
 
 ipcMain.on('vesta:notify', (_event, payload: unknown) => {

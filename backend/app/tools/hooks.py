@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 from app.models.types import (
@@ -30,6 +31,8 @@ class ToolExecutionContext:
     metadata: dict[str, Any] = field(default_factory=dict)
     # 当前 Run 的执行模式（NORMAL / PLAN）；工具可据此做模式内限制。
     mode: AgentMode | None = None
+    # 当前 Run 实际绑定的工作区根目录（各工具据此解析工作区内相对路径与沙箱隔离）。
+    workspace_root: Path | None = None
 
 
 @dataclass(frozen=True, slots=True)

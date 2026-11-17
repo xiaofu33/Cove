@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 
 from app.checkpoint import SQLiteCheckpointStore
 from app.models.types import AgentMode, Message, MessageRole, ToolCall, ToolResult
@@ -74,6 +75,7 @@ class ToolRoundExecutor:
         repeated_count: int,
         emitter: EventEmitter,
         hook: ToolHook,
+        workspace_root: Path | None = None,
     ) -> ToolRoundOutcome:
         """执行工具轮；重复调用错误也连同已完成的前序记录返回。"""
 
@@ -121,6 +123,7 @@ class ToolRoundExecutor:
                     "active_skill_names": context_session.active_skill_names
                 },
                 mode=mode,
+                workspace_root=workspace_root,
             )
             result = await self._execute_one(
                 tool_call,

@@ -6,10 +6,12 @@ load → Run → 写回），RPC 层禁止自己复制执行链。
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from app.application import title_from_content
 from app.conversation import ConversationSource, TriggerContext
+from app.conversation.service import WorkspaceUnavailableError
 from app.models.types import AgentMode
 
 from ..dispatcher import RpcContext, RpcDispatcher
@@ -45,9 +47,57 @@ async def conversation_create(
     title = params.get("title")
     if title is not None and (not isinstance(title, str) or not title.strip()):
         raise JsonRpcError(RpcErrorCode.INVALID_PARAMS, "title must be a string")
+
+    workspace_path = params.get("workspace_path")
+    if workspace_path is not None:
+        if not isinstance(workspace_path, str) or not workspace_path.strip():
+            raise JsonRpcError(
+                RpcErrorCode.INVALID_PARAMS,
+                "workspace_path must be a non-empty string or null",
+            )
+        resolved = Path(workspace_path).expanduser().resolve()
+        if not resolved.is_dir():
+            raise JsonRpcError(
+                RpcErrorCode.INVALID_PARAMS,
+                f"目录不存在或不是文件夹: {workspace_path}",
+            )
+        workspace_path = str(resolved)
+
     conversation = await ctx.application.conversation_store.create(
-        title=title or "新会话"
+        title=title or "新会话",
+        workspace_path=workspace_path,
     )
+    return {"conversation": conversation}
+
+
+async def conversation_set_workspace(
+    params: dict[str, Any],
+    ctx: RpcContext,
+) -> dict[str, Any]:
+    conversation_id = _require_str(params, "conversation_id")
+    workspace_path = params.get("workspace_path")
+    if workspace_path is not None:
+        if not isinstance(workspace_path, str) or not workspace_path.strip():
+            raise JsonRpcError(
+                RpcErrorCode.INVALID_PARAMS,
+                "workspace_path must be a non-empty string or null",
+            )
+        resolved = Path(workspace_path).expanduser().resolve()
+        if not resolved.is_dir():
+            raise JsonRpcError(
+                RpcErrorCode.INVALID_PARAMS,
+                f"目录不存在或不是文件夹: {workspace_path}",
+            )
+        workspace_path = str(resolved)
+
+    try:
+        conversation = await ctx.application.conversation_store.set_workspace(
+            conversation_id, workspace_path
+        )
+    except KeyError as exc:
+        raise JsonRpcError(RESOURCE_NOT_FOUND, str(exc)) from exc
+    except ValueError as exc:
+        raise JsonRpcError(RpcErrorCode.INVALID_PARAMS, str(exc)) from exc
     return {"conversation": conversation}
 
 
@@ -78,12 +128,15 @@ async def conversation_send(
         raise JsonRpcError(RESOURCE_NOT_FOUND, "conversation not found")
 
     # 统一执行入口：禁止 RPC 层自己 load history → start → save。
-    dispatch = await application.conversation_service.dispatch(
-        conversation_id=conversation_id,
-        content=content,
-        trigger=TriggerContext(source=ConversationSource.MANUAL),
-        mode=mode,
-    )
+    try:
+        dispatch = await application.conversation_service.dispatch(
+            conversation_id=conversation_id,
+            content=content,
+            trigger=TriggerContext(source=ConversationSource.MANUAL),
+            mode=mode,
+        )
+    except WorkspaceUnavailableError as exc:
+        raise JsonRpcError(RpcErrorCode.INTERNAL_ERROR, str(exc)) from exc
     # 新会话第一次手动发送 → 复用现有标题生成逻辑。
     if conversation.title == "新会话":
         await application.conversation_store.rename(
@@ -147,6 +200,7 @@ def register(dispatcher: RpcDispatcher) -> None:
     dispatcher.register("conversation.list", conversation_list)
     dispatcher.register("conversation.get", conversation_get)
     dispatcher.register("conversation.create", conversation_create)
+    dispatcher.register("conversation.set_workspace", conversation_set_workspace)
     dispatcher.register("conversation.send", conversation_send)
     dispatcher.register("conversation.rename", conversation_rename)
     dispatcher.register("conversation.delete", conversation_delete)

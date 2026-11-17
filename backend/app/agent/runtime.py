@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import AsyncIterator, Callable, Sequence
 from contextlib import suppress
+from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
@@ -174,6 +175,7 @@ class AgentRuntime:
         run_id: str | None = None,
         recovery_run_id: str | None = None,
         mode: AgentMode = AgentMode.NORMAL,
+        workspace_root: Path | None = None,
     ) -> AgentResult:
         """处理一次用户输入并返回完整的运行结果（AgentResult）。
 
@@ -221,6 +223,7 @@ class AgentRuntime:
                     summary_state=summary_state,
                     recovery_checkpoint=recovery_checkpoint,
                     mode=mode,
+                    workspace_root=workspace_root,
                 )
             except BaseException as exc:
                 if self._checkpoint_store is not None:
@@ -291,6 +294,7 @@ class AgentRuntime:
         run_id: str | None = None,
         recovery_run_id: str | None = None,
         mode: AgentMode = AgentMode.NORMAL,
+        workspace_root: Path | None = None,
     ) -> AsyncIterator[AgentEvent]:
         """以事件流方式执行任务，内部复用同一个 ``run()`` 循环。"""
 
@@ -310,6 +314,7 @@ class AgentRuntime:
                     run_id=run_id,
                     recovery_run_id=recovery_run_id,
                     mode=mode,
+                    workspace_root=workspace_root,
                 )
             finally:
                 await queue_handler.finish()

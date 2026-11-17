@@ -6,6 +6,9 @@ export interface Conversation {
   created_at: string
   updated_at: string
   message_count: number
+  workspace_path?: string | null
+  workspace_fixed?: boolean
+  workspace_available?: boolean
 }
 
 export type MessageRole = 'system' | 'user' | 'assistant' | 'tool'

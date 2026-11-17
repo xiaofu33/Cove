@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from app.models.types import ToolDefinition
+from app.tools.hooks import ToolExecutionContext
 
 from ..base import BaseTool
 from ._workspace import resolve_workspace_path, workspace_root_path
@@ -36,10 +37,25 @@ class ReadFileTool(BaseTool):
         )
 
     async def execute(self, arguments: dict[str, Any]) -> str:
+        return await self._execute_in_root(self._workspace_root, arguments)
+
+    async def execute_with_context(
+        self,
+        arguments: dict[str, Any],
+        context: ToolExecutionContext,
+    ) -> str:
+        root = context.workspace_root or self._workspace_root
+        return await self._execute_in_root(root, arguments)
+
+    async def _execute_in_root(
+        self,
+        workspace_root: Path,
+        arguments: dict[str, Any],
+    ) -> str:
         relative_path = arguments.get("path")
         if not isinstance(relative_path, str) or not relative_path:
             raise ValueError("'path' must be a non-empty string")
-        target = resolve_workspace_path(self._workspace_root, relative_path)
+        target = resolve_workspace_path(workspace_root, relative_path)
         return await asyncio.to_thread(_read_utf8_file, target)
 
 

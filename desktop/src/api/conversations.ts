@@ -25,10 +25,23 @@ export async function getConversation(
   })
 }
 
-export async function createConversation(): Promise<Conversation> {
+export async function createConversation(
+  workspacePath?: string | null,
+): Promise<Conversation> {
   const data = await rpcClient.call<{ conversation: Conversation }>(
     RpcMethods.conversationCreate,
-    {},
+    workspacePath ? { workspace_path: workspacePath } : {},
+  )
+  return data.conversation
+}
+
+export async function setConversationWorkspace(
+  conversationId: string,
+  workspacePath: string | null,
+): Promise<Conversation> {
+  const data = await rpcClient.call<{ conversation: Conversation }>(
+    RpcMethods.conversationSetWorkspace,
+    { conversation_id: conversationId, workspace_path: workspacePath },
   )
   return data.conversation
 }

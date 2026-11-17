@@ -10,6 +10,7 @@ import {
   listConversations,
   renameConversation,
   sendMessage,
+  setConversationWorkspace,
 } from '../api/conversations'
 import { cancelRun, interruptRun, listRuns, recoverRun } from '../api/runs'
 import { getTask, listTasks, planAccept, planReject } from '../api/tasks'
@@ -65,6 +66,7 @@ export default function ChatPage({
   const [lastRunId, setLastRunId] = useState<string | null>(null)
   const [mode, setMode] = useState<AgentMode>('normal')
   const [draft, setDraft] = useState('')
+  const [draftWorkspacePath, setDraftWorkspacePath] = useState<string | null>(null)
   const [conversationSidebarOpen, setConversationSidebarOpen] = useState(
     sidebarCollapsed !== undefined ? !sidebarCollapsed : true,
   )
@@ -328,6 +330,7 @@ export default function ChatPage({
   /** 纯前端切换至新建会话状态：不立即向后端创建记录，避免点击新会话产生大量空白历史 */
   const handleStartNewConversation = useCallback((): void => {
     selectConversation(null)
+    setDraftWorkspacePath(null)
     setLastRunId(null)
     setPlanTask(null)
     setPlanResolved(null)
@@ -367,6 +370,27 @@ export default function ChatPage({
       setSendError(error instanceof Error ? error.message : String(error))
     }
   }
+
+  const updateWorkspaceMutation = useMutation({
+    mutationFn: ({
+      conversationId,
+      workspacePath,
+    }: {
+      conversationId: string
+      workspacePath: string | null
+    }) => setConversationWorkspace(conversationId, workspacePath),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(
+        ['conversation', updated.id],
+        (old: { conversation: typeof updated; messages: Message[] } | undefined) =>
+          old ? { ...old, conversation: updated } : old,
+      )
+      void queryClient.invalidateQueries({ queryKey: ['conversations'] })
+    },
+    onError: (error) => {
+      setSendError(error instanceof Error ? error.message : String(error))
+    },
+  })
 
   const sendMutation = useMutation({
     mutationFn: ({
@@ -614,6 +638,7 @@ export default function ChatPage({
           activityByConversation={conversationActivity}
           onSelect={(id) => {
             selectConversation(id)
+            setDraftWorkspacePath(null)
             setLastRunId(null)
             setPlanTask(null)
             setPlanResolved(null)
@@ -740,19 +765,45 @@ export default function ChatPage({
           commands={composerCommands}
           hasMessages={displayMessages.length > 0}
           messagesCount={displayMessages.length}
+          workspacePath={
+            selectedId
+              ? conversationQuery.data?.conversation.workspace_path
+              : draftWorkspacePath
+          }
+          workspaceFixed={Boolean(
+            selectedId &&
+              (conversationQuery.data?.conversation.workspace_fixed ||
+                (conversationQuery.data?.conversation.message_count ?? 0) > 0),
+          )}
+          workspaceAvailable={
+            selectedId
+              ? (conversationQuery.data?.conversation.workspace_available ?? true)
+              : true
+          }
+          onWorkspaceChange={async (nextPath) => {
+            if (!selectedId) {
+              setDraftWorkspacePath(nextPath)
+              return
+            }
+            await updateWorkspaceMutation.mutateAsync({
+              conversationId: selectedId,
+              workspacePath: nextPath,
+            })
+          }}
           onSend={async (content) => {
             setSendError(null)
             setLastRunId(null)
             setLiveTurnActive(true)
 
             let targetId = selectedId
-            // 延迟创建：用户提出第一个需求并发送时，才向后端真正创建会话记录
+            // 延迟创建：用户提出第一个需求并发送时，才向后端真正创建会话记录（带上已选工作区）
             if (!targetId) {
               setIsCreatingConversation(true)
               try {
-                const newConv = await createConversation()
+                const newConv = await createConversation(draftWorkspacePath ?? undefined)
                 targetId = newConv.id
                 selectConversation(targetId)
+                setDraftWorkspacePath(null)
                 void queryClient.invalidateQueries({ queryKey: ['conversations'] })
               } catch (err) {
                 setSendError(err instanceof Error ? err.message : String(err))

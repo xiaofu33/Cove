@@ -42,7 +42,8 @@ CREATE TABLE IF NOT EXISTS runs (
     source_id TEXT,
     scheduled_for TEXT,
     triggered_at TEXT,
-    mode TEXT NOT NULL DEFAULT 'normal'
+    mode TEXT NOT NULL DEFAULT 'normal',
+    workspace_root TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_runs_conversation_updated
@@ -59,6 +60,7 @@ _PROVENANCE_COLUMNS = (
     "scheduled_for TEXT",
     "triggered_at TEXT",
     "mode TEXT NOT NULL DEFAULT 'normal'",
+    "workspace_root TEXT",
 )
 
 
@@ -92,6 +94,7 @@ class SQLiteRunStore:
         scheduled_for: datetime | None = None,
         triggered_at: datetime | None = None,
         mode: AgentMode = AgentMode.NORMAL,
+        workspace_root: str | None = None,
     ) -> Run:
         """创建一个 PENDING Run，并返回完整记录。"""
 
@@ -104,8 +107,9 @@ class SQLiteRunStore:
                 INSERT INTO runs (
                     run_id, conversation_id, status, user_message,
                     created_at, updated_at, recovered_from_run_id,
-                    source, source_id, scheduled_for, triggered_at, mode
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    source, source_id, scheduled_for, triggered_at, mode,
+                    workspace_root
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     run_id,
@@ -128,6 +132,7 @@ class SQLiteRunStore:
                         else None
                     ),
                     AgentMode(mode).value,
+                    _optional_identifier(workspace_root),
                 ),
             )
             await database.commit()
@@ -365,6 +370,11 @@ def _run_from_row(row: aiosqlite.Row) -> Run:
             AgentMode(row["mode"])
             if "mode" in row.keys() and row["mode"] is not None
             else AgentMode.NORMAL
+        ),
+        workspace_root=(
+            row["workspace_root"]
+            if "workspace_root" in row.keys()
+            else None
         ),
     )
 

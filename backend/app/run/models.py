@@ -105,8 +105,16 @@ class Run(BaseModel):
     triggered_at: datetime | None = None
     # 一次执行的模式（NORMAL / PLAN）。不是生命周期状态，只是输入语义。
     mode: AgentMode = AgentMode.NORMAL
+    # 本次 Run 实际使用的执行工作区根目录绝对路径（用于审计、会话隔离与 recover 一致性）。
+    workspace_root: str | None = None
 
-    @field_validator("id", "conversation_id", "recovered_from_run_id", "source_id")
+    @field_validator(
+        "id",
+        "conversation_id",
+        "recovered_from_run_id",
+        "source_id",
+        "workspace_root",
+    )
     @classmethod
     def normalize_identifier(cls, value: str | None) -> str | None:
         if value is None:

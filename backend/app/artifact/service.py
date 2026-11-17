@@ -73,6 +73,7 @@ class ArtifactService:
         run_id: str | None = None,
         conversation_id: str | None = None,
         task_id: str | None = None,
+        workspace_root: str | Path | None = None,
     ) -> Artifact:
         """把 workspace 内的文件复制成不可变 Artifact。
 
@@ -80,7 +81,12 @@ class ArtifactService:
         - 复制进 managed 目录，原文件后续修改/删除不影响 Artifact。
         """
 
-        source = resolve_workspace_path(self.workspace_root, path)
+        root = (
+            Path(workspace_root).expanduser().resolve()
+            if workspace_root is not None
+            else self.workspace_root
+        )
+        source = resolve_workspace_path(root, path)
         if not await asyncio.to_thread(source.is_file):
             raise ValueError("artifact path must reference a file in the workspace")
         size_bytes = (await asyncio.to_thread(source.stat)).st_size
